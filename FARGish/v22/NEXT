@@ -1,0 +1,41 @@
+Static force-directed.html page
+
+  Figure out how to render adding a node or edge
+
+  Figure out how to pin a node
+
+Lay out traces vertically and timesteps horizontally, pinned
+
+Render the x32 problem
+
+  Just force-directed nodes  DONE
+
+  With containers
+
+Single-step the model from the browser
+
+  Local matches in Typed Racket  DONE
+
+  Log (to display) local matches and actions
+
+Invent local matches
+
+Render support edges
+
+Render salience
+
+Render support
+
+
+
+The new syntax
+--------------
+Parser   DONE
+
+graph->proc
+
+  find-nodes-permutation
+
+  scout-for
+
+Compile codelet source to graph

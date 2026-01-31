@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+  <title>A FARG model shown with cytoscape.js</title>
+  <link rel="stylesheet" type="text/css" href="cy.css" />
+</head>
+<body>
+  <div id="cy"></div>
+  <div class="controls">
+    <p>&nbsp;t=<span id="t">0</span> &nbsp;&nbsp;&nbsp; nodes:&nbsp;<span id="nodecount">0</span> &nbsp;&nbsp;&nbsp; edges:&nbsp;<span id="edgecount">0</span></p>
+    <p>
+      <button id="step" onClick="stepButton()">t+1</button>
+      <button id="reset" onClick="resetButton()">reset</button>
+      <input type="button" id="cola" value="cola" onClick="colaRun()" />
+      <input type="button" id="getModel" value="getModel" onClick="getModel()" />
+    </p>
+  </div>
+  <script src="jquery.js"></script>
+  <script src='cytoscape.min.js'></script>
+  <!-- <script src="cola.v3.min.js"></script> Old version. Best? -->
+  <!-- <script src="http://marvl.infotech.monash.edu/webcola/cola.js"></script> -->
+  <!-- <script src="cola.js"></script> -->
+  <script src="cola.min.js"></script>
+  <script src="cytoscape-cola.js"></script>
+  <script src="fargcyto.js"></script>
+</body>
+</html>

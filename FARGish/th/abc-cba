@@ -1,0 +1,326 @@
+abc -> cba; pqr -> ?
+S1     S2   S3     S4
+
+
+
+This would not work:
+Arrow: .start-letter 'a' to 'c'; .op Succ to Pred.
+
+
+FIRST ATTEMPT (16-Feb-2023)
+
+1. Repetition detector:   'abc'
+   R1=Repeat(S1, D1, F1)
+   D1=Seed(L1, K1)
+   L1='a'
+   K1=1       a relative address
+   F1=Succ
+
+2. Repetition detector:   'cba'
+   R2=Repeat(S2, D2, F2)
+   D2=Seed(L2, K2)
+   L2='c'
+   K2=1
+   F2=Pred
+
+   This is not so good. We want to perceive the mirror relation. To get that,
+   we need the seed to be the same for both repeaters but the direction to be
+   opposite.
+
+   If we made an Arrow painter that said "change 'a' to 'c' and Succ to Pred",
+   that wouldn't work very well on 'ppqqrr'.
+
+   Should the model, prompted by Succ/Pred, search for a Mirror relation, so
+   the seed would be the same or a mirror for both repeaters?
+
+   Another approach: The model could try running a clumsy Arrow painter and
+   find that it doesn't work so well on 'ppqqrr'. This requires a modeling
+   decision: how does the model judge that Arrow(RR1=repeater('ppqqrr')) was
+   clumsy?
+
+   Another approach: Could something in the long-term memory prompt searching
+   for a consistent Mirror relationship?
+
+3. 'Same' Detector:
+   Q1=Same(I1, J1)
+   I1=S1/3
+   J1=S2/1
+   Leftmost(S2, J1)
+   Rightmost(S1, I1)
+
+   Now how does this lead to seeing a mirror relation? The Mirror detector
+   has to see this, and maybe at the same time see the Succ/Pred relation.
+
+4. 
+
+X. SOMEHOW construct:
+   Arrow(RR1, RR2
+   RR1=Repeater(SS1, DD1, FF, .dir=DDR1)
+   RR2=Repeater(SS2, DD2, FF, .dir=DDR2)
+   OtherSide(SS1, SS2)
+   DD1=Seed(LL, KK1)
+   LL='a'
+   KK1=1
+   DD2=Seed(LL, KK2)
+   KK2=3
+   Opposite(DDR1, DDR2)
+
+   #Add(RR1, RR2, Direction(RightToLeft))
+
+   Arrow(RR1, RR2
+   RR1=Repeater(SS1, DD1, FF, .dir=DDR1)
+   RR2=Repeater(SS2, DD2, FF, .dir=DDR2)
+   OtherSide(SS1, SS2)
+   DD1=Seed(LL, KK1)
+   DD2=Seed(LL, KK2)
+   Opposite(DDR1, DDR2)
+   Opposite(KK1, KK2)    <-- how do we determine the opposite of an index?
+      Not so good, because relative indices don't know what snippet they're
+      part of. So, Opposite can't figure out that 3 is the opposite of 1.
+
+   Could the snippet have direction rather than the repeater? Let's say no,
+   because multiple repeaters may need to view the same snippet differently.
+
+   Should relative indices know what painter they're a part of? No. That would
+   nbe an absolute index.
+
+   Could we refer to cells by their tags--i.e. use the tags themselves as
+   indices?
+          aaaaaaataaaaaaaaaaaaaa  TheSalientThing
+   Such addressing would work well when moving to a new context. This is true
+   "relative addressing". Relative means relative to context. "Index Tags"
+
+   What do index tags look like?
+
+      Rightmost
+      Leftmost
+        ^ have an Opposite relation
+
+      TheSalientThing
+        ^ needs to be relative to the reason for salience?
+
+      a tag for a rough ratio of where something is in its snippet, like
+      "in the middle" or "about 1/3 of the way from the left"
+
+      a tag for the flaw in a snippet, e.g. the 'd' in 'abd'
+
+      There must be painters that paint TheSalientThing. This allows
+      flexibility in what gets tagged Salient.
+
+      What is Salient might be "what got tagged" (with some other tag).
+
+      What is Salient might be "what didn't get tagged", e.g. the cell or
+      snippet that is not Leftmost or Rightmost.  13. kkmmmmooo
+
+      Do we need a salience-detector, analogous to a repetition-detector?
+      This would mean that if a painter referred to "WhatIsSalient", the
+      salience-detector would look for something to tag as Salient--a letter,
+      a snippet, an index. Maybe, for simplicity, only tag indices as salient.
+
+   WANT: If the indices S1/1 and S2/3 are not tagged Leftmost and Rightmost,
+   Opposite should fail but trigger a search to set those tags.
+
+   A simple way to achieve that:
+      1. Tag Arrow(RR1=R3 'pqr') 'failed' in such a way that allows retrying
+         it later. Maybe, "needs index with Opposable tag".
+      2. That need boosts the activation of Rightmost and Leftmost.
+      3. They wake up and tag S1/1 and S3/3.
+      4. Then the model re-runs Arrow and it succeeds. Then the model removes
+         the failure tag.
+
+   CONCLUSION: A painter cluster is a new proto-prainter.
+
+
+   Rightmost and Leftmost are the only possible start (or end) indices for any
+   repeater.
+
+
+   IDEA: Could the model create the Seed concept dynamically? Two of a
+   repeater's arguments are .start_index and .start_letter. Often we need to
+   bundle these together, hence the Seed object. But sometimes we don't;
+   sometimes one of them is redundant. So, could the model notice an occasion
+   where it helps to bundle these, and create something like this:
+   Bundle(.start_index, .start_letter)
+
+   'abc'
+   Seed(_, 1)      Redundant?
+   Seed('a', _)    Redundant?
+
+   Wait a minute. A repeater needs a seed to specify *both* a letter and an
+   index. So, neither one can be redundant.
+
+
+   exempli gratia
+
+   i.e.   id est
+
+   Id Ego Superego
+
+
+TEST RUN
+
+abc  ___
+S1   S2   
+
+Arrow(RR1=R1):
+   RR2=Repeater(OtherSide(S1), Seed('a', ??: 3), Succ, .dir=RightToLeft)
+
+----------
+
+The same should happen without an arrow, e.g. 'abccba'.
+
+
+
+SECOND ATTEMPT
+
+1. Repetition detector:   'abc'
+   R1=Repeat(S1, D1, F1)
+   D1=Seed(L1, K1)
+   L1='a'
+   K1=1       a relative address
+   F1=Succ
+
+2. Repetition detector:   'cba'
+   R2=Repeat(S2, D2, F2)
+   D2=Seed(L2, K2)
+   L2='c'
+   K2=1
+   F2=Pred
+
+If we used relative indices, then we might be able to reconstruct S4 out of S3.
+
+Do we need a detector to convert R2 to relative indices?
+
+Or 
+
+   R3=Repeat(S3, D3, F3, DIR3)
+   D3=Seed(L3, K3)
+   L3='a'
+   K3=1               <--- relative index
+   F3=Succ
+   DIR3=RightToLeft   <--- ... because we're going right to left
+   
+How does the model detect RightToLeft?
+
+Maybe give Succ higher priority than Pred.
+
+   When we create a Succ painter, also paint a Pred painter.
+
+Maybe don't have a Pred painter. Just have Succ, which can optionally be
+combined with RightToLeft.
+
+   Against this idea: sometimes we want to perceive the start at the left.
+   Succ+RightToLeft makes you perceive the start at the end.
+   zyxwaaa
+
+   OTOH, the start-letter could still come at the 'end' of the string, i.e.
+   index 1 with RightToLeft.
+
+   For now, let's stick with having both Succ and Pred painters, and just
+   work out the rest of this example using Succ in both directions.
+
+3. Another detector builds a repeater for S2 that goes the other way:
+   R2A=Repeat(S2A, D2A, F2A, DIR2A)
+   D2A=Seed(L2A, K2A)
+   L2A='a'
+   K2A=1               <--- relative index
+   F2A=Succ
+   DIR2A=RightToLeft   <--- ... because we're going right to left
+
+3. The Diff process looks at R1 and R2 and constructs this painter:
+   Arrow(RR1, RR2, SS1, SS2, DD1, DD2, FF1, FF2, LL1, LL2)
+   RR1=Repeat(SS1, DD1, FF1)
+   RR2=Repeat(SS2, DD2, FF2)
+   OtherSide(SS1, SS2)
+   DD1=Seed(LL1, KK)
+   LL1='a'
+   DD2=Seed(LL2, KK)
+   LL2='c'
+   FF1=Succ
+   FF2=Pred
+
+   Should there be a mirror painter to convert between Succ and Pred?
+
+   This cluster is unsatisfactory because it's so arbitrary. It only has two
+   non-arbitrary relations: OtherSide and KK is the same for both seeds.
+   But the model should try to use it, because sometimes unsatisfactory is
+   the best you have.
+
+4. The Diff process looks at R1 and R2A and constructs this painter:
+   Arrow2(RR1, RR2, SS1, SS2, DD, FF, DIR)
+   RR1=Repeat(SS1, DD, FF)
+   RR2=Repeat(SS2, DD, FF, DIR)
+   OtherSide(SS1, SS2)
+   DIR=RightToLeft
+
+5. Repetition detector:   'pqr'
+   R3=Repeat(S3, D3, F3)
+   D3=Seed(L3, K3)
+   L3='p'
+   K3=1       a relative address
+   F3=Succ
+
+6. Now the model tries running Arrow on the New World, specifically with
+   RR1=R3. This fails because R3's "LL1" is not 'a'. This causes unification to
+   fail. So, we tag Arrow(RR1=R3) with failure. But the model should not give
+   up yet.
+
+7. The model can address the failure tag by "fudging" the LL1 in Arrow(RR1=R3).
+   This yields:
+   Arrow1a(...)   same as Arrow except:
+   LL1='p'
+
+   Arrow1a can run. But Arrow1a must carry a Hack tag, to indicate its
+   inferiority. We still need to work it out in full, but we expect that this
+   tag will cause Arrow2's progeny to prevail.
+
+   WTST: Arrow1a, even after it runs successfully, still loses to Arrow2.
+
+   Let's finish Arrow1a:
+   Arrow1a(RR1, RR2, SS1, SS2, DD1, DD2, FF1, FF2, LL1, LL2):
+   RR1=Repeat(SS1, DD1, FF1)
+   RR2=Repeat(SS2, DD2, FF2)
+   OtherSide(SS1, SS2)
+   DD1=Seed(LL1, KK)
+   LL1='p'                <--- the only change
+   DD2=Seed(LL2, KK)
+   LL2='c'                <--- but this is still terrible
+   FF1=Succ
+   FF2=Pred
+   
+8. Let's run Arrow1a. It creates a new repeater, R4, which creates a new
+   snippet:
+   R4=Repeat(S4A, Seed('c', 1), Pred)
+   S4A=Snippet(.body='cba', .replaces=S4)
+
+9. Let's run Arrow2. It creates a new repeater, R5, which creates a new
+   snippet:
+   R5=Repeat(S4B, Seed('p', 1), Succ, RightToLeft)
+   S4B=Snippet(.body='rqp', .replaces=S4)
+
+   Now, why is S4B superior to S4A? It must have something to do with the
+   repeaters.
+
+   - R5 has a shorter (hence simpler) genealogy than R4.
+
+   - R5 uses only explicit letters from the New World (hence more pertinent to
+     context).
+
+   - The 'fudge' fix alone ought to count against R4. More fudges, worse
+     solution.
+
+   - More Same and less different is better, in the Arrow* painters. Arrow2
+     reuses seed (DD) and operation (FF). Arrow1a has to specify seeds (DD1
+     and DD2) and operations (FF1 and FF2). As Arrow2 sees it, both repeaters
+     use the same operation, so Arrow2 doesn't care what it is. The operation
+     is a variable rather than two constants. Similarly for the seeds.
+
+   - Arrow2 specifies a difference: a new direction. 
+
+   Exactly how to make S4B prevail over S4A can be deferred until the model is
+   implemented. It will be some combination of numerical weights for the above
+   factors.
+
+
+   Does R4 use all the of available relationships?
+   mrrjjj

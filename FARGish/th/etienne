@@ -1,0 +1,427 @@
+abc  Repeat(Succ)
+abd  Repeat(Succ) + 3rd element is succ(3rd elem of another canvas)
+
+abcef
+abccd
+
+axxxx -> abcde
+
+
+ajaqb
+
+Detector(repetition, same, limit=1, startc='a', flawtype=?)  10
+Detector(repetition, succ, limit=1)   6
+ .
+ .
+ .
+Detector(Apart, I=3, D=2)   yes: i found {I=3,J=5}
+  given one cell, another cell exists with a certain spatial relation to it
+Detector(Succ, I=3, J=5)    yes: i found {I=3,J=5}
+  the two given cells have a certain value relation
+Detector(Apart, I=3)        need argument: J or D
+
+=> create a painter with Apart[D=2, I=3, J=5]
+
+
+{I=3,J=5} still don't combine nicely => no painter
+{I=3,J=5}
+
+abc -> abd; ijk ->  ctopp
+
+
+Detector[RepetitionFlaw, snippet] => mark the flaw
+
+Detector[Flaw, where to look for where to fix it]
+
+
+p3
+Apart[2,I,J]
+Succ[I,J]
+
+  Give the painter an address, i.e. an index for I or J.
+  The painter figures out J or I, and what to paint there.
+
+
+ajaqb
+
+Apart[1,1,2]
+Apart[1,2,3]
+Apart[1,3,4]
+Apart[1,4,5]
+Apart[2,1,3]
+Apart[2,2,4]
+Apart[2,3,5]
+Apart[3,1,4]
+Apart[3,2,5]
+Apart[4,1,5]
+
+
+1. What should detectors detect?
+2. When should a detector be created?
+3. What should a detector do when it detects its thing?
+     make a painter
+
+
+See something, do something.
+1. See I, paint J   <--- must have painter
+2. See J, paint I   <--- must have painter
+3. See the relationship, make the painter  <-- must have detector
+
+4. See a blank at I, find a J to use as its source
+5. See a blank at J, find an I to use as its source
+
+3b. Allow relationships involving painters.
+
+Hopfield net: value relations only. C&P: spatial relations and value relations.
+
+
+Painters: Given one, I can create the other, in my relationship
+
+
+Ask a painter to make a detector?
+
+
+Detector = painter + substitution
+p1(I=2, J=3)  -> no
+
+
+I=2, J=3, D=2   10      I=2, D=3
+I=3, J=5         2
+I=1, J=2        10
+
+
+
+Argument types:
+I, J   canvas indices
+P, Q   painters
+
+
+Detector returns:
+"where I found it"   if detector searches multiple places
+yes/no               if detector is limited to looking at one place only
+  need another argument
+
+Apart[D,I,J]  {I=2,J=4}  need D
+
+
+Reasons why cp2 not good enough
+1. Variable-length blanks
+2. Bad at "larger entities": no "chunks"  abc   aa_____ aabbcc
+
+Solutions:
+1. indirection in painters
+2. snippets & repeaters  aa __ __   aa bb __
+
+
+----------------------------
+
+Absorbed:  abc
+  pr: Repeater[Succ, startc='a', len=3]
+
+Seed canvas: aa____
+  Repeater[Same, startc='a', len=2] -- Snippet#1[1..2]
+  ? Repeater[breaking-into-similar-snippets]
+    => Snippet#2[3..4], Snippet#3[5..6]  (Snippet #1.1)
+    aa __ __
+  ? pr: run Succ on #1,#2 and #2,#3
+    aa bb cc
+
+Why break the string into smaller snippets?
+  1. Every Repeater fills a Snippet; creating a Repeater creates a Snippet.
+  2. Since we made a len=2 Snippet, make more len=2 Snippets
+
+# of snippets = 3
+
+How does Snippet#1 trigger breaking-into-similar-snippets?
+How does Succ['aa'] = 'bb'?
+
+
+Seed canvas: aa______
+  Repeater[Same, startc='a', len=2] -- Snippet#1[1..2]
+  Repeater[breaking-into-similar-snippets]
+    => Snippet#2[3..4], Snippet#3[5..6], Snippet#4[7..8]  (Snippet #1.1)
+  pr: run Succ on #1,#2 and #2,#3, #3,#4
+    aa bb cc dd
+
+------------------------------
+
+No abstract painters. All painters have only constants (all variables are
+specified).
+
+Each timestep, the available painters generate Detector objects, each of
+which can only look in one place for one thing.
+
+Each timestep, the available painters generate variants of themselves. Turn
+the knobs. Sometimes set a knob to fit what's there in the canvas. Sometimes
+just turn a knob randomly a little bit.
+
+  pr:  Repeater[Succ, startc='a', len=3, Snippet#A1]
+  pr2: Repeater[Succ, startc='a', len=fill, Snippet#1.1]
+
+
+Initial painters:
+  DetectRepetition[Same, limit=0] => tell me a snippet!
+
+New detector(s):
+  DetectRepetition[Same, limit=0, Snippet#0] => failed, but saw 2
+  DetectRepetition[Same, limit=0, Snippet#0, len=2] => yes, startc='a'
+    Paint[Repeater[Snippet#0, startc='a', len=2]] => Snippet#1
+
+
+Each detector yields some information.
+
+
+Painters generate two kinds of things:
+
+1. Detectors
+
+2. PaintActions
+
+Each Detector looks in only one place.
+  Therefore: we never see a lot of one thing? No, there can be detectors
+  that look at the whole canvas as one place, and return a whole-canvas
+  result.
+
+Detectors return different kinds of result:
+
+- Failed, maybe with arguments for variant detector, possibly loosening
+  criteria
+
+- ISeeIt, and arguments for painter (i.e. a painter to make)
+
+
+Pretty much everything takes a substitution as an argument and returns a
+substitution as a result.
+
+------------------------------
+
+Apart[D, I, J]
+
+Detector[Apart, D=2, I=#1–1]  #1 = snippet #1,  1 = index 1
+{D=2, I=#1-1, J=#1-3}
+
+d2a: Detector[Repeat, Succ, errlimit=0, startc='a']
+-> NeedArgument[snippet]
+
+create_detector_variant(d2a, NeedArgument[snippet], workspace)
+
+
+It looks like detectors, painters, and predicates pass and return
+substitutions (maps of variables to constants). Each substitution is like
+a set of patch cables saying where to receive some information from.
+    
+------------------------------
+
+Absorbing ajaqb
+
+#1  'ajaqb'
+
+    LTM:
+    Repeat[Same, errlimit=0]
+    Repeat[Succ, errlimit=0]
+    Repeat[Pred, errlimit=0]
+    SimplePainter[snippet=#1]
+      NeedArguments[D, I, J]
+      system looks at canvas, finds 'a' in cell 1
+      Try SimplePainter[snippet=#1, I=1]
+      NeedArguments[D, J]
+      Try SimplePainter[snippet=#1, I=1, J=2]
+      Now SimplePainter deduces that D=1, returns {I=1, J=2, D=1}, Failed
+      Make a variant: {I=1, J=3}, try it
+      Now SimplePainter returns success: SimplePainter[I=1, J=3, D=2]
+
+SimplePainter
+  Apart[D, I, J]
+  Same[I, J]
+
+
+When varying SimplePainter[I=1, J=3, D=2], do it by first simply removing I
+or J. The system should know that I and J are the anchoring arguments, and D
+describes the relation. There are two ways to make a variant: changing the
+anchors and changing the relation. Each must be handled differently.
+Whenever you change the relation, you must blank out at least one of the
+anchors.
+
+p1[I=2] -> J=4
+p1[J=4] -> I=2
+
+
+    RelationDetector[snippet=#1, relation=Same, D=1]  10
+    RelationDetector[snippet=#1, relation=Same, D=2]   7
+    RelationDetector[snippet=#1, relation=Same, D=3]   7
+    RelationDetector[snippet=#1, relation=Succ, D=1]   4
+    RelationDetector[snippet=#1, relation=Pred, D=2]   4
+
+Painters create Paint objects (actionable things to do).
+Detectors create Painters.
+Painters create Detectors?
+A few special Detectors are pre-created and never go away.
+
+
+"Hey, p3, where else might you be able to paint?"
+
+
+#1 'ajaqb'
+
+  detect: a_a   Apart[2, 1, 3], Same[1, 3]
+  detect: a_b   Apart[2, 3, 5], Succ[3, 5]
+  detect: a_a overlaps with a_b
+  detect: j inside a_a
+  detect: q inside a_b
+  detect: previous two have the 'inside' relation
+          (same relation in two painters)
+
+Detecting 'same' anything should be easy.
+
+What detectors do we need to detect each of those things?
+  'same 2 apart' detector
+  'succ 2 apart' detector
+  overlap detector
+  'letter inside 2 apart' detector
+  same-relation detector
+
+Keep a set of detectors that never changes. This set of detectors looks
+at the set of canvas cells and painters and searches for things to do with
+them.
+
+    RelationDetector    Succ  Apart  'a' 'j' 'a' 'q' 'b'
+    "Let's try searching for a Succ relation 2 apart."
+
+    AbstractDetector      FlexibleDetector   DetectorGenerator
+    DeterminateDetector   ConstantDetector   Detector
+
+    List of spatial predicates      List of value predicates
+    --------------------------      ------------------------
+    Apart                           Same
+    Inside                          Succ
+                                    Pred
+
+A DetectorGenerator named SeeRelation chooses one spatial predicate and one
+value predicate and constructs a Detector to look for it.
+
+When we construct a Detector, we should probably construct a whole lot of
+very similar Detectors. So, if we're looking for something Apart+Same,
+we should look for it in many places on the canvas, one Detector for each
+place. It's like the DetectorGenerator chooses something to look for and
+sets a whole lot of traps for it.
+
+    RelationDetector chooses Apart and Same, and makes Detectors for:
+        I=1 D=1  Failed
+        I=2 D=1  Failed
+        I=3 D=1  Failed
+        I=4 D=1  Failed
+        I=5 D=1  Failed
+        I=1 D=2  True    => build p1
+        I=2 D=2  Failed
+        I=3 D=2  Failed
+        I=4 D=2  Failed
+        I=5 D=2  Failed
+
+    RelationDetector chooses Apart and Succ, and makes Detectors for:
+        I=1 D=1  Failed
+        I=2 D=1  Failed
+        I=3 D=1  Failed
+        I=4 D=1  Failed
+        I=5 D=1  Failed
+        I=1 D=2  Failed
+        I=2 D=2  Failed
+        I=3 D=2  True    => build p3
+        I=4 D=2  Failed
+        I=5 D=2  Failed
+
+
+Crazy idea: Try to make all the detectors repetition detectors.
+
+    aja  = flawed repetition of Same
+    aqb  = flawed repetition of Succ
+
+Another detector detects digraphs: 2 arbitrary consecutive letters.
+
+Utochkin
+
+------
+Rejected idea
+
+SimplePainter
+  Apart[D, I, J]
+  R[I, J]
+
+Ways to fill R:
+1. Just start with Same[I, J] (i.e. no R).
+2. Some other detector/painter searches for a function to fill R with.
+
+
+
+
+
+Restoring from a____
+Restoring from m____
+Restoring from _j___
+
+
+
+
+
+------------------------------
+
+abc -> abd; ijk -> ?
+
+
+
+
+Every time an anchored painter paints, it paints at an anchor that is in one or more respects different from its own anchor.
+
+You need to orient to "the 'a' of that context".
+
+
+Question #1:  (Or perhaps fill another parameter, like D.)
+
+
+----------------------------------------
+Email, 27-May-2023
+
+abc->abd; ijk->?
+
+   See that 'abc' is a Succ group:
+   abc: Chunk[Run[L -> Succ[L]]]          Notice that Seed[a] and Length[3] are missing.
+
+   See that 'abd' is a Succ group with a Skip:
+   abd: Chunk[Run[L -> Succ[L]] Skip[Last]]
+
+   See delta between OW.lhs and OW.rhs:
+   Chunk[Run[L -> Succ[L]]] -> Chunk[Run[L -> Succ[L]] Skip[Last]]
+
+   See that 'ijk' is a Succ group:
+   ijk: Chunk[Run[L -> Succ[L]]]
+
+   See that the delta matches 'ijk: Chunk[Run[Succ]] -> Blank' and fills the blank:
+   Blank: Chunk[Run[L -> Succ[L]] Skip[Last]]
+
+   See that Chunk[Run[L -> Succ[L]] Skip[Last]] does not contain enough information
+   to paint a letterstring. The model must now look again at 'ijk' and flesh out its
+   representation into a full recipe:
+   ijk: Chunk[Run[L -> Succ[L]] Seed[i] Length[3]]
+
+   Now the model can apply the delta, yielding:
+   Blank: Chunk[Run[L -> Succ[L]] Seed[i] Length[3] Skip[Last]]
+
+   This representation for Blank paints 'ijl', which is the solution.
+
+-----
+
+   ii,jj,kk: Chunk[Run[Seed[L] -> Seed[Succ[L]]] Seed[Chunk[Run[Same] Seed[i] Length[2]]] Length[3]]
+
+   Chunk[
+      Chunk[Run[L -> L] Seed[m] Length[1]]
+      Chunk[Run[L -> L] Seed[r] Length[2]]
+      Chunk[Run[L -> L] Seed[j] Length[3]]
+   ]
+
+   Chunk[
+      Seed[Chunk[Run[L -> L] Seed[m] Length[1]]]
+      Run[Length[N] -> Length[N+1]]
+      Run[Seed[L] -> Seed[NextFrom[chunk1]]]
+      Length[3]
+   ]
+
+   Run[L -> Succ[L]] => Run[Chunk[... Length[N]] -> Chunk[... Length[N+1]]]

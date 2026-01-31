@@ -1,0 +1,80 @@
+#lang brag
+
+farg-spec : @fargish-elem*
+
+/fargish-elem : nodeclass-definition
+              | connection-definition
+              | codelet
+
+nodeclass-definition
+  : NODECLASS IDENTIFIER args ancestors nodeclass-body
+  ; TODO Put a / before NODECLASS
+
+nodeclass-body
+  : /";"
+  | /"{" nodeclass-body-elem* /"}"
+
+args : ()
+     | /"(" /")"
+     | /"(" arg /")"
+     | /"(" arg (/"," arg)+ /")"
+
+/arg : untyped-arg | typed-arg
+
+untyped-arg : IDENTIFIER
+
+typed-arg : IDENTIFIER /":" IDENTIFIER
+
+ancestors : ()
+          | /":" (IDENTIFIER | IDENTIFIER (/"," IDENTIFIER)+)
+
+nodeclass-body-elem : lhs /"=" expr /";"
+
+lhs : IDENTIFIER
+    | chain-expr
+
+expr : IDENTIFIER
+     | NUMBER
+     | STRING
+     | /"(" @expr /")"
+     | expr BINARY-OP expr
+     | function-call
+     | chain-expr
+
+chain-lhs : node-ref /"." IDENTIFIER [/"." chain-expr]
+
+chain-expr : node-ref (/"." chain-link)+
+
+; existing-node-ref ?
+@node-ref : already-named-node | ME | named-node | /"(" node-ref /")"
+
+already-named-node : IDENTIFIER
+
+connection-definition
+  : chain-lhs /"=" chain-expr /";"
+
+chain-link : node-ref | explicit-edge /"." chain-link
+
+named-node : /"[" IDENTIFIER /":" node-class /"]"
+
+node-class : IDENTIFIER
+
+function-call : expr /"(" [ expr (/"," expr )* ] /")"
+
+codelet : /CODELET IDENTIFIER /GIVEN /"{" match-elems /"}"
+                              /MAKE /"{" make-elems /"}"
+
+match-elems : match-elem*
+
+@match-elem : node-ref         ; need to disallow ME
+            | chain-expr
+            | /"{" expr /"}"   ; will be treated as Boolean expression
+
+make-elems : make-elem*
+
+@make-elem : chain-expr
+           ; Also need to allow { node.value = expr } ?
+
+explicit-edge : /"(" port-label /"--" port-label /")"
+
+port-label : IDENTIFIER

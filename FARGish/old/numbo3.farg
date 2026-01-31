@@ -1,0 +1,76 @@
+externalFuncs: { pair, chooseSubclass, arithResult, DONE, tag, untag,
+  neighbor, neighbors, NodeWithTag, Just1NodeWithTag, OfClass, build,
+  backtrack }
+
+tags -- taggees
+source -- consumer
+operands :: source
+builder -- built
+
+Tag
+  taggees
+
+Avail, Consumed, Failed :: Tag
+
+Number(n)
+  value = n
+
+Target :: Number
+
+Brick :: Number
+  consumer
+
+Block :: Number
+  source, consumer
+
+Operator
+  operands, consumer
+
+Plus, Times :: Operator
+
+Want :: Tag
+  target = taggee
+  scout: OperandsScout(target)
+  scout: BacktrackingScout(target)
+  scout: DoneScout(target)
+
+OperandsScout #TODO Rewrite this to reflect numbo3b.py (detecting stuckness)
+  see p := pair(NodeWithTag(Number, Avail))
+      opClass := chooseSubclass(Operator)
+  => build(ConsumeOperands(opClass, p))
+  else build(StuckScout)
+
+ConsumeOperands(operatorClass, nodes)
+# We build this as a separate node instead of doing it immediately so that
+# support can flow to it and it can ally and compete with other nodes to
+# get selected to actually happen. Also, it should have an activation threshold.
+  => op := build(operatorClass, linkFrom=nodes)
+     r := build(Block(arithResult(op)), linkFrom=op)
+     tag(Consumed, nodes)
+     untag(Avail, nodes)
+     tag(Avail, r)
+
+DoneScout(target)
+  see x := NodeWithTag(Number, Avail), x == target
+  => DONE
+
+StuckScout :: OneShot
+  # We're stuck: find something to backtrack
+  see n := And(NodeWithTag(Number, Avail), NodeWithNeighbor(built_by),
+               Not(NodeWithTag(Node, Backtrack)))
+  => add_tag(Backtrack, n)
+
+BacktrackingScout(target)
+  see n := And(NodeWithTag(Node, Backtrack), Not(SameValue(target)))
+  => backtrack(n)
+
+#BacktrackingScout(target)
+#  see x := Just1NodeWithTag(Number, Avail), x != target
+#  => tag(Failed, x)
+#     untag(Avail, x)
+#     op := source(x), OfClass(Operator, op)
+#     srcs := operands(op)
+#     tag(Failed, x, op, builder(x, op))
+#     untag(Consumed, srcs)
+#     tag(Avail, srcs)
+#     #TODO Add Failed tags recursively; probably needs an external func

@@ -1,0 +1,110 @@
+(set-union) won't take zero arguments. Why not return empty set?
+
+(#%app f arg . optarg) won't compile. This makes it hard to write a macro
+that forwards arguments to a function definition.
+
+
+
+Why I've usually found Racket agonizing to program in, even though it's really
+good and I get results:
+
+1. The documentation. It's great about syntax, but it's missing how to *use*
+libraries (so using them is like solving a jigsaw puzzle without the picture)
+and semantics are often not spelled out clearly and directly. I'm constantly
+guessing and doing "primary research" on the libraries.
+
+2. Debugging. How do you find out what's happening in a program? Half the time
+I'm guessing what the semantics and intended way of use is, so I have to
+debug. Stacktraces are often hard to get; line-number information is often
+missing. What function called what? What arguments were on the stack?
+
+3. Readability. How do you write readable code in Racket? Is it possible?
+Looking at Racket source code is usually a major undertaking.
+
+4. SLOW. The frequent, unpredictable pauses interfere with my train of
+thought.
+
+
+An example of an error message that omits crucial information:
+. Type Checker: type mismatch
+  expected: srcloc
+  given: Any in: (quote blah)
+
+What thing was supposed to be of type srcloc?
+
+
+Error message:
+../../../../Applications/Racket v7.0/share/pkgs/typed-racket-lib/typed-racket/tc-setup.rkt:94:0: result arity mismatch;
+ expected number of values not received
+  expected: 2
+  received: 1
+  in: local-binding form
+  values...:
+There's no info here that points to the error in my program.
+
+
+Missing documentation: ~optional as an H-pattern defaults to #f if no
+#:defaults clause is specified.
+
+Missing documentation: If an ~optional returns #f, and the #f gets bound to
+a pattern variable, how do you ever look at the pattern variable?
+#'name gets an error because 'name' is not a syntax object; 'name' by itself
+gets an error because it's a pattern variable.
+
+Unclear documentation: parse-define-struct "Parses stx as a define-struct
+form". What does that mean?
+
+Unclear documentation: let*-values in Typed Racket:
+(let*-values ([(var+type ...) e] ...) . body)
+What is var+type? Should the user write (let*-values ([(a : Symbol) 'x]) a)
+or (let*-values ([([a : Symbol]) 'x]) a)? You can only tell by primary
+research that it's the latter. If it's too tedious to spell out what var+type
+means, an example would clarify it easily.
+
+
+Stuff to go into a Racket cookbook
+----------------------------------
+
+Suppose that you have a syntax-parse macro with a #:with. How do you move the
+#:with to a function (or something) so you can call it from two macros? (See
+fizzle.rkt.)
+
+For example, I started with this:
+     #:with srcloc-expr (quasisyntax/loc #'nodeclass
+                          (srcloc '#,(syntax-source #'nodeclass)
+                                  '#,(syntax-line #'nodeclass)
+                                  '#,(syntax-column #'nodeclass)
+                                  '#,(syntax-position #'nodeclass)
+                                  '#,(syntax-span #'nodeclass)))
+and changed it to this (inside begin-for-syntax) after a few attempts:
+  (define (srcloc-expr stx)
+    #`(srcloc '#,(syntax-source stx)
+              '#,(syntax-line stx)
+              '#,(syntax-column stx)
+              '#,(syntax-position stx)
+              '#,(syntax-span stx)))
+Am I missing an obviously right way to do it?
+
+
+
+
+----------
+
+Why has programming in Racket been so painful?
+
+1. The documentation.
+
+2. Racket tries to be the whole universe. Result: complication everywhere,
+so-so tools and libraries. TANSTAAFF
+
+3. Lists. Why is it so hard to make a sequence of things in the order in which you make it?
+
+4. Hey! What about DSLs? What about tools to make it easy to make DSLs?
+
+5. How do you grow programs gradually without introducing bugs?
+
+6. How do you write readable Racket code?
+Compare all the clutter in scheme-parser in br-parser-tools/examples/read.rkt
+to a typical yacc grammar.
+
+7. How do you break off a small piece of a problem to work on it separately from the rest? Usually easy in OO; not obvious in Racket.

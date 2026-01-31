@@ -1,0 +1,90 @@
+EXAMPLE: The 'ijl' analogy, solved by painter clusters. Trying to work out the
+details of the idea.
+
+abc -> abd; ijk -> ?
+S1     S2   S3     S4
+
+
+ABSORPTION
+
+1. Repetition detector:
+   R1=Repeat(S1, D1, F1)
+   D1=Seed(L1, I1)
+   L1='a'
+   I1=1       a relative address
+   F1=Succ
+
+2. Repetition detector:
+   R2=Repeat(S2, D2, F2, E1)
+   D2=Seed(L2, I2)
+   L2='a'
+   I2=1
+   F2=Succ
+   E1=Exception(G1, I3)      operation, relative index
+   G1=Skip                   G because G follows F in the alphabet
+   I3=3
+
+3. The Diff process compares R1 and R2, yielding this painter-cluster, which
+   can construct R2 from R1 and vice versa:
+
+   Arrow(RR1, RR2, SS1, SS2, DD, FF, EE, GG, II)
+   RR1=Repeat(SS1, DD, FF)
+   RR2=Repeat(SS2, DD, FF, EE)
+   OtherSide(SS1, SS2)
+   LengthRelation(SS1, SS2, Same)
+   EE=Exception(GG, II)
+   GG=Skip     <-- GG and II are constants, not relations.
+   II=3        <-- what if SS2 has more than 3 cells?
+                   The best way to find II is to get it from context.
+                   Maybe have II refer to a tag, which then has to be placed
+                   in SS2?
+   
+   In Arrow, the 'Same' elements are replaced by common variables, i.e. DD
+   and FF.
+
+REGENERATION
+
+4. Repetition-detector:
+   R3=Repeat(S3, D3, F3)
+   D3=Seed(L3, I4)
+   L3='i'
+   I4=1
+   F3=Succ
+
+5. Now that S3 is filled by a repeater (R3), try to run Arrow on R3:
+   Arrow(RR1=R3) returns:
+   RR1=R3 RR2=Repeat(S4, Seed('i', 1), Succ+Exception(Skip, 3))
+   + all the other variables needed for RR2 to refer to
+
+   RR1=R3       SS1=S3 DD=D3 FF=F3
+   RR2=Repeat(S4, D3, F3, E2)
+   OtherSide(S3, S4)   <--- Arrow filled in S4 SOMEHOW
+   LengthRelation(S3, S4, Same) <--- Store 3 into length of S4
+   E2=Exception(G2, I4)   <--- Arrow constructed E2
+   G2=Skip                <--- copied from Arrow
+   I5=3                   <--- copied from Arrow
+
+   How do we choose 3 as the index? It really should be chosen by being the
+   last index reached in the snippet by repetition.
+
+   Now how do we create new things in the workspace to reflect the subst that
+   Arrow returned?
+
+      Maybe just note which variables in the local subst got filled, and
+      add those to the workspace, maybe assigning them new variables.
+
+      What about S4? It looks like OtherSide simply refers to the variable
+      S4's definition in the workspace, i.e. in the global subst. So,
+      OtherSide just completes as OtherSide(S3, S4).
+
+6. Run RR2.
+   That fills S4 with 'ijl', and we're done.
+
+If you pass a painter cluster a subst that makes some of the variables
+conflict with each other, the cluster should fail. "Unification failure"
+
+Should we look for relations between all possible snippets? Should we run the
+Diff process on the repeaters for 'abd' and 'ijk'? Maybe. At minimum, we look
+for relations between snippets separated by ->. Maybe the solution is that the
+model *could* look for a relation between any two snippets, but it prioritizes
+which snippet pairs it looks at (SOMEHOW).

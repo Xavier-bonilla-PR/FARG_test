@@ -1,0 +1,59 @@
+How to avoid rebuilding the graph of all the equations.
+
+How to make building that graph much faster.
+
+How to get better performance on spreading activation and support network:
+number-crunching on a big graph.
+
+How do you stop flow of dependency? OO: polymorphism. Lisp: switch statements??
+
+How to avoid getting a sprawl of tiny functions?
+
+Easy ways to make little languages? Without getting mired in syntax-parse?
+
+Why is scrolling so slow in DrRacket? How to speed it up?
+
+Way to get decent data visualization without writing lots of code.
+
+How to grab and move edge in graph visualization.
+
+--
+
+How do you do polymorphism in Racket? Generic interfaces: 30x slower, and not
+much used? Go to OO (classes)?
+
+How do you write readable code in Racket? All I ever seem to write is a sprawl
+of functions. That's pretty much all I've seen. Do you just put up with that?
+How do you write code so you can get the gist of it without reading it very
+carefully?
+
+How do you use the GUI library as it's meant to be used? How would you make a
+graph where the user can move nodes around on the screen?
+
+How do you get good use out of the REPL?
+
+If you run the Racket REPL from the command line (as with XREPL), how do you
+make all your modified code reload?
+
+How do you run unit tests with Typed Racket? (rackunit doesn't show the line
+number of a failing assertion; 'expect' doesn't work with Typed Racket.)
+
+Is it normal for DrRacket to run so slowly? Are there things I can do to speed
+up compilation and unit-testing?
+
+How do you debug in Racket? How do you see what's going in a program? #r and
+displayln don't seem to be enough. Stack traces in DrRacket usually omit much
+of the stack, including the relevant parts.
+
+
+BROADLY How do you write code in Racket that is easy to modify, when you don't
+fully understand the whole problem? In OO languages, writing code in order to
+understand the problem better, and then modifying it when you see a better way
+to do it, is pretty easy if you follow heuristics like the Law of Demeter,
+which put boundaries around "ripple" from new changes. I haven't found
+comparable heuristics for Racket.
+
+It seems that 'match' is a very easy way to get into trouble, because it makes
+ripple that's unbounded, subtle, and invisible. When you modify code in one
+place, it's not obvious that you need to modify a bunch of 'match' statements
+throughout the code.

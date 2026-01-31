@@ -1,0 +1,852 @@
+23,26-May-2023
+
+Can we replace variables with indexicals?
+
+
+"the next one"
+
+"the odd one"
+
+"the odd letter"
+
+"the predominant letter"
+
+"the 'c'" (a specific letter, to refer to where something is)
+
+"the current one"
+
+
+Store "how to make the next one".
+Basically a Run.
+
+
+1. bbbb -> bbbbb; bbb -> ?
+
+? = Same Run, but Length is Succ
+  = Same Run as OtherSide but Length is Succ
+  = Same as OtherSide but Length is Succ
+
+The -> function is a sort of delta. It says to copy the lhs but make a change.
+
+Canvas[Span[Predominantly[b]] -> Predominantly[b]] ; Predominantly[b] -> Blank]
+
+Canvas[Span[Length[N]] -> Span[Length[N+1]] ; Span[Length[3]] -> Blank]
+
+
+OldWorld: Predominantly[b] -> Predominantly[b]
+OldWorld: Length[4] -> Length[5]
+                 N  ...       N+1
+          ATTR[N]   ...     ATTR[N+1]
+
+These mean:
+
+   There's something predominantly 'b'; to its right there is '->'; to its
+   right there is something predominantly 'b'.
+
+   There's something with Length[4]; to its right is '->'; to its right there
+   is Length[5].
+
+   There is something with N; the next numerical thing to its right, not
+   necessarily adjacent, is something with N+1.
+   This one needs a context that is already pared down.
+
+   There is some attribute ATTR with a value N; somewhere to its right,
+   the same ATTR occurs, and its value is N+1.
+
+Each of these refers to a context, can serve as a context, and can be run to
+fill or flesh out a new context.
+
+These are painters.
+
+How do we get from:
+
+   Length[3] -> Blank
+
+to this?
+
+   Length[3] -> Length[4]
+
+
+Perhaps "abstracted" painters still depend on adjacency among elements, but
+this adjacency skips over letters, like this:
+
+p1: Length[4] -> Length[5]
+p2:        4            5
+p3:        N            N+1
+
+
+aaaaaaqxqaaaaaaa   aaaaaaqxqxqaaaaaaa
+We have to make the matcher blind to irrelevant Ns in this case. The matcher
+should skip over the numbers of a's and x's. We do this by omitting them from
+the context with the N and the N+1 for the q's.
+
+A context needs to tell how to plug things into the context that it was
+abstracted from.
+
+We should spell out "the same" as little as possible, and focus on the delta.
+The delta tells where to find something and how to change it; other than that,
+just copy.
+
+If an extremely minimal delta isn't enough to run in the New World, then add
+more detail about what's the same.
+
+How, then, do we get the ability to favor solutions that reflect more of the
+common structure between Old World and New World?
+
+To specify where something is, we have to walk the graph (tree) of
+rerepresentation. We can walk it by saying what to look for at each step, e.g.
+"a Length". 
+
+The mapping from "walk" to "mapping of graph to graph" is ambiguous: there
+might be many ways to do it. Therefore we will need to make these mappings
+explicitly and compare them.
+
+Perhaps the walk and mapping could themselves be incorporated into the terms
+that steps in the walk that use to refer to things.
+
+Having very few "things" helps with the search. Heuristic: keep a small search
+space.
+
+DISS: Human intelligence has vast flexibility in what it can describe and
+search for, and simultaneously it's very good at keeping its search space
+small at each step. This is a major element of what makes people smart.  We
+write database queries or grep commands to search millions of possibilities,
+but human intelligence finds much subtler things with almost no searching.
+We're good at making things easy to find.
+
+THESIS: Everything is a pronoun.
+
+Could we start representing strings with out-of-focus descriptions, like
+"there's a span there", "there's a run there", and fill them in when
+pressured to look by other things in the search?  Span[] could be "there's
+something Span-worthy there". Span[Blank] could mean "you need to fill this by
+creating some letters".
+
+   Canvas[Span -> Span; stuff...]
+   Canvas[Span -> Span[Predominantly[b]]; ...]
+      now look for more Predominantly[b]
+   Canvas[Span[Predominantly[b]] -> Span[Predominantly[b]]; ...]
+
+Then doubt/rationalize.
+
+Needing a "thing" on the next step and finding it is evidence that the walk is
+good (similar to guesses becoming easier in a cryptogram).
+
+IDEA FOR A PAPER: Measure how easy the next guess becomes in a cryptogram.
+Correlate that with whether the previous guesses were correct.
+
+Could we score painters high if they all paint the same things even when
+transplanted to new contexts, i.e. the intersection of what the different
+painters paint is consistent?
+
+Each term needs the ability to paint something in a context. So each term is a
+painter? Strictly, a term paints something in a "hole" in a context, i.e.
+an exact place in a context.
+
+These new painters appear to use relative addressing for everything: "to the
+right". This is good.
+
+Blank[Span], Blank[Length], Span[Blank], Span[Length]: somehow indicate the
+"type" of the blank. Blank[int] Blank[can Succ]
+
+We say "this is the reverse of that". The model needs a way to say that "this"
+and "that" have a relationship. Perhaps like this:
+
+   abccba
+   Span[a b c] Span[c b a]
+   SPAN Reverse[SPAN]
+
+i.e. the first variable matches the first Span. This might work much better
+than supplying variables via parameters. The only parameter to a painter is
+a context, i.e. where to paint itself. Variables are therefore the indexicals.
+
+No one painter should ever be complicated. Each should be something that a
+person could easily say in a sentence, like "this is the Succ of that".
+Complexity, at least of the kind needed for dougs84 problems, should come
+only from coalitions of painters.
+
+The model needs to be good at both coming up with little descriptors, like
+Predominantly[b], *and* at giving up on them when they don't lead anywhere.
+
+The elements that we're keying off of and painting are really "chunks". As
+with real chunks in human cognition, we throw away most of the information for
+purposes of quick/loose matching, but we still have access to that information
+for purposes of filling blanks or checking carefully.
+
+
+Summary of today's main idea (23-May-2023): 
+
+   Painters contain terms that they can find in a context to use as reference
+   points.  "Orient to reference points. The manner of orientation is taken
+   from one context and brought to another."
+
+
+   Make rerepresentations that describe just features of things in their
+   spatial configuration (left to right), i.e. relative addressing. This
+   allows a rerepresentation to refer to "the previous one", "the next
+   letter", "the next Length", etc. Terms like Predominantly[b] enable the
+   model to match the next "thing" that is predominantly 'b' without
+   specifying much about it--loose matching.
+
+   A rerepresentation can match part of a sequence and fill a blank with
+   the rest.
+
+   Variables are filled by taking them from the matching place in the target
+   context.
+
+   The only argument to a painter (i.e. a rerepresentation) is what context in
+   which to match or paint.
+
+   A painter can be a context for another painter.
+
+
+
+bbbbqbbbbttttftthhhbhhh -> bbbbbbbbbttttftthhhbhhh; gggygggbbbubbbbbwwswwww -> ?
+   "Fix the section that is predominantly 'b'."
+
+   predominantly(b) predominantly(t) predominantly(h) -> 
+      same(b) predominantly(t) predominantly(h)
+
+   predominantly(g) predominantly(b) predominantly(w) ->
+      Blank
+
+   Rule: predominantly(b) -> same(b)
+
+Need:  (postulated abilities)
+
+   Easily perceive the OW as predominantly(b) predominantly(t) predominantly(h).
+   Easily perceive Runs with one flaw.
+
+   Easily perceive the change from OW.lhs to OW.rhs, and represent it as
+   predominantly(b) -> same(b).
+
+   Walk the tree according to "predominantly(b) -> same(b)" in the NW: find
+   'bbbubbbbb' and rewrite it as 'bbbbbbbbb'. That means finding the
+   predominantly(b) and using it as a reference point when painting the ?.
+
+   Represent the NW.lhs as three predominantlies.
+
+
+Terms:
+   
+   Predominantly[b]
+     Mostly[b]
+     All[b]
+
+   Icon[b]
+
+
+bbbqbbbbttttrtthhhshhh -> bbbqbbbbttttrtthhhthhh ; abc -> ?
+Icon[q] Icon[r] Icon[s] -> Icon[q] Icon[r] Icon[t] ;
+
+
+
+
+Modules (or UTs) to code up:
+
+   Represent 'bbbbqbbbb' as Predominantly[b].
+
+   Represent OW.lhs as three Predominantlies in sequence.
+
+   Represent the "delta" across the -> as a Rule.
+
+      To calculate a delta: walk in parallel through each context and note
+      where a difference occurs. Note the difference by where to find it.
+      For "where to find it", we need a way to distinguish it within its
+      context.
+
+   A function that can distinguish the Predominantly[b] within OW.lhs and
+   OW.rhs. "The Predominantly[b]" rather than "the 1st chunk".
+
+
+Because we now have just one argument per term, the job of calculating a delta
+becomes easy.
+
+
+5. aaaxa -> aaaaa; qmmmmm -> ?
+
+Span[a a a x a] -> Span[a a a a a] ; Span[q m m m m m] -> Span[Blank]
+
+
+... ; Span[Length[6] Run[Same] Seed[m] Replace[1 q]] -> Span[Length[5] Run[Same] Seed[m]]
+
+
+32. eeeeqee -> eeeeree; sosss -> ?
+
+Chunk[Run[Same] Seed[e] Exception[q] ExceptionAt[5]] -> Chunk[Run[Same] Seed[e] Exception[r] ExceptionAt[5]] ;
+      Chunk[Run[Same] Seed[s] Exception[o] ExceptionAt[2]] -> Chunk[]
+   annotated everything
+Exception[L] -> Exception[Succ[L]]
+   the output of the Differ (input was the Old World)
+Chunk[Run[Same] Seed[s] Exception[p] ExceptionAt[2]]
+   result of running the Differ's output on NW.lhs
+
+
+
+THE PROCESS
+Annotate everything. The Differ produces a very small output of the form "Term -> Term". Run that output on NW to fill the blank.
+Running the output requires finding addresses in the NW to match those in the output. The Differ output specifies a little piece
+to change within a larger structure that is duplicated between lhs and rhs.
+
+
+Exception[q] -> Exception[r]
+:eeeeqee        :eeeeree               The colons mean "address of the thing being described"
+          
+L               Succ[L]
+:q:Exception[q] :r:Exception[r]
+
+
+When you go to the New World, you need to "run" the same terms but at different addresses. So, to run/match L, you need to find
+an Exception that it is part of. Some other process might build Exceptions, perhaps bottom-up.
+
+
+
+Icon[L] -> Icon[Succ[L]]
+
+If you pull out the Icon a certain way, you have to be able to put the rest back by reversing the certainb way.
+
+
+Abhinav: "I first see Predominantly[e], not Icon[q]." The Succ relationship between 'q' and 'r' leads you to view these letters
+as icons.
+
+*** Do we need to annotate the whole string, or can we just notice the few pieces of interest first?
+annotate = rewrite
+
+   Possibilities:
+
+      Annotate the whole string and keep a whole Canvas[...] at every step.
+      The Rules should be able to match parts of the whole.
+
+      Record terms for pieces along with their "contextual address".
+      Try to match those terms with other terms to fill blanks.
+
+      Annotate only as much as you need to find something.
+
+*** What are all the transformations (Rules, etc.) that we need?
+
+   Rules: match something (lhs, with variables) -> add a term that describes it (constants only)
+
+   part-whole completion: match A (with variables) against B (with a blank) -> rewrite B (filling the blank, constants only)
+
+   The Differ: given two terms, tell how to turn one into the other
+
+      In the indexical approach, we want the output of the Differ to be very simple, e.g. "replace the odd letter with its Succ"
+
+   Running the output of the Differ: difference term (a compound term) is given a new context; in that context, it duplicates the
+   lhs except for some change specified in the difference.
+
+When we notice something, we want to note where we noticed it. "Where we noticed it" is some index into the context, i.e. a way
+to find it again.
+
+   Every span term needs to be associated with a place in its context. That place could be an index into the canvasm, or something
+   at a higher level.
+
+How do we track that the Predominantly[] goes with its Icon[]?
+
+   Two possibilities:
+
+      rewrite: Chunk[Predominantly[] Icon[]]
+
+      track spans:     eeeeqee: Predominantly[e]
+                       eeeeqee: Icon[q]
+
+reduction rules & relative addresses
+
+32a. eeeeqee -> eeeeree; abcdoefghi -> ?
+
+[seq] [L] [seq]
+
+[seq, predominantly, icon,..] [...] [...]  Rule
+
+
+DEFINING/THEORETICAL IDEAS
+
+An indexical is something that has a different meaning in different contexts, like a pronoun. "I" means something different when you
+say it than when I say it. "This" means something different depending on what you are pointing at.
+
+Indexicals in the c&p model should be terms that can match or generate different things in different contexts.
+
+Hazy concepts are indexicals. E.g. "the big one", "the odd one", "the confusing
+one", "mostly". A hazy concept becomes sufficiently clear when you can find
+*one* thing in a given context that answers to it in a way that stands out
+relative to everything else.
+
+'Predominantly' is a hazy indexical pointer into many different contexts.
+
+Loose and approximate is god enough for nearly everything in real life. So loose and approximate should work in the model, too.
+
+
+Another kind of indexical: "find the big one", "find the small one".
+
+   gggggggggee -> hhhhhhhhhee ; vvvooooooo -> ?
+
+
+----------------------------------------
+
+FULLY WORKED EXAMPLES
+
+32. eeeeqee -> eeeeree; sosss -> ?
+
+   The final recipe:
+      difference: ODD -> Succ[ODD]
+
+      Chunk[Run[Same] Seed[e] ReplaceWith[q] ReplaceAt[5] Length[7]] -> Chunk[Run[Same] Seed[e] ReplaceWith[r] ReplaceAt[5] Length[7]] ;
+      Chunk[Run[Same] Seed[s] ReplaceWith[o] ReplaceAt[2] Length[5]] -> Chunk[Run[Same] Seed[s] ReplaceWith[p] ReplaceAt[2] Length[5]]
+
+      Since we're now relying on indexicals as much as possible, do we need the first line to spell everything out so much? Could
+      we have a simpler first line? Or better yet, no first line? We could drop the first line because all we need to remember from
+      'eeeeqee -> eeeeree' is 'ODD -> Succ[ODD]'. We still need the NW.lhs, though, because we need to edit it at a high level.
+
+
+      Chunk[Predominantly[e]] -> Chunk[Predominantly[e]]       ans: sssss
+      Chunk[Odd[q]] -> Chunk[Odd[r]]      ans: sosss
+
+
+   Method #1: Avoid recipes for OW.
+
+      see that there are a lot of e's in OW.lhs:
+      eeeeqee: Predominantly[e]
+
+      see that there is just one lonely q among the e's:
+      eeeeqee: Odd[q]
+         We tagged the 'q' as Odd.
+
+      see that there are a lot of e's in OW.rhs:
+      eeeeree: Predominantly[e]
+
+      see that there is just one lonely r among the e's:
+      eeeeree: Odd[r]
+
+      see delta between OW.lhs and OW.rhs:
+      Odd[L] -> Odd[Succ[L]]
+
+      we also see this delta, but we aren't going to use it in this problem:
+      Predominantly[L] -> Predominantly[L]
+
+      see that there are a lot of s's in NW.lhs:
+      sosss: Predominantly[s]
+
+      see that there is just one lonely o among the s's:
+      sosss: Odd[o]
+
+      the delta now matches 'Chunk[sosss] -> Chunk[Blank]' and fills the blank:
+                             sosss: Odd[o] -> Blank
+      Blank: Odd[p]
+
+      But Odd[p] is not a recipe! It needs a context in which to fit in.
+      Now we need to create a recipe.
+
+            Actually, Odd[o] was Odd[o RelativeTo[Predominantly[s]] At[2]]
+            and       Predominantly[s] was Predominantly[s RelativeTo[Chunk[sosss]]].
+            An Odd[] can match another Odd[] even if their RelativeTo's, etc. are different.
+
+            Odd[] needs the ability to regenerate context and apply itself.
+            The delta changes:
+               Odd[o RelativeTo[Predominantly[s]] At[2]]
+            to:
+               Odd[p RelativeTo[Predominantly[s]] At[2]]
+            The Predominantly[s] still remembers where it came from.
+
+            If Predominantly can generate its string, then Odd[RelativeTo[Predominantly]] can
+            generate its string, too, by overwriting the Predominantly string.
+
+      So, when we ask Odd[p] to paint, it produces 'sosss'. That's the solution.
+
+One moral of this example: you must end with a recipe, and a literal string is the simplest recipe.
+
+
+Can only Run paint something onto the canvas?
+
+"Flesh out" the indexical: convert it to a recipe that can paint a letterstring.
+
+Indexicals might come in two types: "the" and "all" (or anything corresponding to a grammatical determiner).
+
+Trickiness is OK as long as it's sound.
+
+----------------------------------------
+
+abc->abd; ijk->?
+
+   Method #1: Skip
+
+      The final recipe:
+
+         Chunk[Run ...] -> Chunk[Run ... Skip[Last]]
+
+         Chunk[...] -> Chunk[... Skip[Last]]
+
+         NW.rhs: Chunk[Run[Succ] Seed[i] Length[3] Skip[Last]]
+
+            We only need a recipe for NW.rhs.
+
+      Steps to construct it:
+
+         see that 'abc' is a Succ group:
+         abc: Chunk[Run[Succ]]          Since this is the indexical approach, we omit Seed[a] and Length[3].
+
+         see that 'abd' is a Succ group with a Skip:
+         abd: Chunk[Run[Succ] Skip[Last]]
+
+         see delta between OW.lhs and OW.rhs:
+         Chunk[...] -> Chunk[... Skip[Last]]
+            or perhaps don't even bother with ...:
+         Chunk[Run[Succ]] -> Chunk[Run[Succ] Skip[Last]]
+
+         see that 'ijk' is a Succ group:
+         ijk: Chunk[Run[Succ]]
+
+         see that the delta matches 'ijk: Chunk[Run[Succ]] -> Blank' and fills the blank:
+         Blank: Chunk[Run[Succ] Skip[Last]]
+
+         But Chunk[Run[Succ] Skip[Last]] is not a recipe! It doesn't know Length or Seed.
+         But if we tracked that Run[Succ] came from 'ijk', we have all the information we need.
+         We must now take ijk: Chunk[Run[Succ]] and flesh it out into a full recipe:
+         ijk: Chunk[Run[Succ] Seed[i] Length[3]]
+         Now we can apply the delta:
+         Blank: Chunk[Run[Succ] Seed[i] Length[3] Skip[Last]]
+         That is a recipe, and paints the solution.
+
+A principle: no annotation that can't paint (e.g. Odd[]) can refer to something (that it needs in order to paint) on a rhs.
+This is because we need the ability to construct a rhs using nothing the lhs as a start point. The "antecedent" of an indexical
+must exist, and a rhs is not guaranteed to exist.
+
+A BIG DOUBT: Our extremely terse indexical deltas depend on noticing that everything not stated is the same. It's not a good
+analogy unless the structures match. Most of the lhs and rhs should be identical when viewed in terms of structure. The extreme
+indexical approach ignores this.
+
+
+NEXT Work out rules for what counts as a recipe and how to "flesh out" a recipe from an indexical.
+
+
+   Method #2: Indexical for Last
+
+----------------------------------------
+
+abc->abd; iijjkk->?
+
+   The final recipe (for NW.rhs):
+
+      Chunk[
+         Chunk[Run[L -> Succ[L]] Seed[i] Length[3] Skip[Last]]
+         ExpandedVia[Chunk[Run[Same] Seed[L] Length[2]]]
+      ]
+
+   Steps to construct it:
+
+      see that 'abc' is a Succ group:
+      abc: Chunk[Run[L -> Succ[L]]]          Since this is the indexical approach, we omit Seed[a] and Length[3].
+
+      see that 'abd' is a Succ group with a Skip:
+      abd: Chunk[Run[L -> Succ[L]] Skip[Last]]
+
+      see delta between OW.lhs and OW.rhs:
+      delta= Chunk[Run[L -> Succ[L]]] -> Chunk[Run[L -> Succ[L]] Skip[Last]]
+
+      see that 'ii' is a Same group:
+      ii: Chunk[Run[Same] Seed[i] Length[2]]
+
+      see that 'jj' is a Same group:
+      jj: Chunk[Run[Same] Seed[k] Length[2]]
+
+      see that 'kk' is a Same group:
+      kk: Chunk[Run[Same] Seed[k] Length[2]]
+
+      see that 'ii,jj,kk' is a Succ group:
+      ii,jj,kk: Chunk[
+                   Run[Seed[L] -> Seed[Succ[L]]]
+                   Seed[Chunk[Run[Same] Seed[i] Length[2]]]
+                   Length[3]
+                ]
+      
+      The delta.lhs needs to match the rewritten NW.lhs but it doesn't.
+      So, create a mapping:
+      delta-helper= Run[L -> Succ[L]] -> Run[Seed[L] -> Seed[Succ[L]]]
+
+      delta'= Chunk[Run[Seed[L] -> Seed[Succ[L]]]] -> Chunk[Run[Seed[L] -> Seed[Succ[L]]] Skip[Last]]
+         
+         OBSERVATION delta is really OW.delta and delta' is really NW.delta.
+         The delta-helper is what crosses from OW to NW. The 'ijk' problem has
+         a "null" delta-helper. Could other "helpers" be necessary to go from
+         OW to NW?
+
+      Now delta'.lhs matches NW.lhs, and fills the blank:
+      Blank: Chunk[Run[Seed[L] -> Seed[Succ[L]]] Skip[Last]]
+
+      That is not enough to paint a letterstring, because it lacks Seed and Length, so we look back at NW.lhs and get those:
+      Blank: Chunk[
+                Run[Seed[L] -> Seed[Succ[L]]]
+                Seed[Chunk[Run[Same] Seed[i] Length[2]]]
+                Length[3]
+                Skip[Last]
+             ]
+
+      That paints the solution.
+
+This problem introduced one new element: the delta-helper, which makes NW.delta.
+
+PROBLEM In plain English, the solution is: "skip (advance) the last chunk". The deltas above don't exactly say this. Really,
+no delta-helper should be needed for this problem. A better delta would be:
+
+   Chunk[RUN] -> Chunk[RUN Skip[Last]]
+
+----------------------------------------
+
+pons regum
+
+"chunk-language"
+
+abc->abd; mrrjjj->?
+
+   The final recipe:
+
+      In plain English: Advance the last chunk; but in the OW, each chunk is a letter, and in the NW, each chunk is a sequence
+      of the same letter, and what advances is the length.
+
+      delta= Chunk[RUN] -> Chunk[RUN Skip[Last]]
+
+      PROBLEM How do we get mrj?
+      NW.rhs: Chunk[
+                 Run[Length[N] -> Length[N+1]]
+                 Seed[
+                    Chunk[
+                       Run[L -> L] Seed[m] Length[1]
+                    ]
+                 ]
+                 Length[3]    could we take the length from 'm,rr,jjj'?
+                 Skip[Last]
+              ]
+
+              Chunk[
+                  Run[
+                     Length[N] -> Length[N+1]
+                     Seed[L] -> Seed[NextFrom[THISCHUNK]]
+                     ]
+                  Seed[m]
+                  Length[3]
+                  Skip[Last]
+              ]
+
+   Steps to construct it:
+
+      see that 'abc' is a Succ group:
+      abc: Chunk[Run[L -> Succ[L]]]          Since this is the indexical approach, we omit Seed[a] and Length[3].
+
+      see that 'abd' is a Succ group with a Skip:
+      abd: Chunk[Run[L -> Succ[L]] Skip[Last]]
+
+      see delta between OW.lhs and OW.rhs:
+      delta= Chunk[Run[L -> Succ[L]]] -> Chunk[Run[L -> Succ[L]] Skip[Last]]
+
+      see 'm' as a chunk:
+      Chunk[Run[L -> L] Seed[m] Length[1]]
+
+      see 'rr' as a chunk:
+      Chunk[Run[L -> L] Seed[r] Length[2]]
+
+      see 'jjj' as a chunk:
+      Chunk[Run[L -> L] Seed[j] Length[3]]
+
+      see 'mrrjjj' as three chunks:
+      chunk1= Chunk[
+         Chunk[Run[L -> L] Seed[m] Length[1]]
+         Chunk[Run[L -> L] Seed[r] Length[2]]
+         Chunk[Run[L -> L] Seed[j] Length[3]]
+      ]
+      
+      QUESTION Could we have a term that "reaches inside" chunk1 and advances the last Length?
+
+      IDEA Match "all that stuff" except for Length; specify advancing just the Length in the Run.
+      Regenerate by matching the chunks in NW.lhs and altering them, not by regenerating from scratch.
+
+      IDEAS for how to specify a 'source' sequence that iterates through some existing chunk:
+
+         seq1= Run[Seed[L] -> Seed[NEXT-CHUNK]]   NO
+
+         Need the ability to refer to something inside a Chunk without taking the whole Chunk.
+
+         What could the 'calling code' look like?
+
+            Chunk[                             want 'mrrjjj'
+               seq1=mrj
+               Run[Chunk[...Seed[L] Length[N]] -> Chunk[...Seed[NextFrom[seq1 L]] Length[N+1]]]
+               Seed[Chunk[Run[L -> L] Seed[m] Length[1]]]
+               Length[3]
+            ]
+
+      Chunk[mrj]
+            
+      OBSERVATION Do we really need a Run to represent a sequence in the NW? Maybe not.
+         mrrjjj 
+         abcuvwpqrst 
+         rmkepdzney 
+         
+         Run -> Run
+
+         chunk1, chunk2... chunkN -> chunk1', chunk2' ... chunkN'
+
+                        Run[CHUNK -> Delta[CHUNK]]
+
+         Looking at 'aaaaabccdddde -> aabbccddee', the delta is:
+
+           CHUNK[... Length[N]] -> CHUNK[... Length[2]]
+
+      Need a way to refer to anything from anywhere else: "go find it" (i.e. an indexical).
+      Apparently an easy way to do this is to match a big chunk and destructure it, as in
+      *** below.
+
+      Is there a way that we could have one of these rewrite rules rewrite a rewrite rule?
+      Yes, we have that all over the place already: rewriting three Chunks as a Chunk[Run];
+      making a delta to go from lhs to rhs.
+
+         
+
+    a Run is a kind of source for the parent Chunk
+
+      NW.rhs: Chunk[
+         Run[Chunk[... Length[N]] -> Chunk[... Length[N+1]]]
+         Seed[chunk1.firstchunk]
+         Skip[Last]
+      ]
+
+      NW.rhs: Chunk[
+         Run[CHUNK[... Length[N]] -> CHUNK[... Length[N+1]]]   CHUNK must iterate through the Chunks in chunk1
+
+
+THE MAIN QUESTION How do we make Skip advance the Length but not the letter?
+
+OBSERVATION I mentally "slipped" Succ to advance only the Length and not the letter, and didn't notice for a long time.
+
+IDEA Come up with a new alphabet: 'mrj'.
+
+ArbitrarySeq[mrj]
+
+Once you perceive 'mrrjjj' in the right way, only the lengths are salient. The letter *doesn't matter*.
+
+
+Another approach: Don't perceive the solution as a Skip, perceive as taking the successor of 'jjj'. 
+
+Another approach: Rerepresent 'mrrjjj' as *nothing but* a succession of lengths. Then, to paint the lengths as
+letters, i.e. to fill the three chunks, the model looks at 'mrrjjj' as a source.
+
+MUST HAVE The model must have the ability to respond to "can't Succ" by simply repeating the item.
+
+'mrrjjj' suggests that there is a fourth letter in the sequence, which would fill a length-four Same-group. But no fourth letter
+is provided, so we have to "slip" taking Succ[j].
+
+----------------------------------------
+
+A MAIN IDEA
+
+The "delta" tells how to edit an lhs at a high level, i.e. how to edit a recipe for the lhs. Editing at a high level means editing
+the structure.
+
+
+In analogies, we mostly want *priming* for seeing a relation in the NW. We don't really need much or sometimes anything from the OW.
+
+Analogies enables us to infer, but not by formal logic. It's a rigged up, ad hoc logic--just enough to find something in the NW
+to exploit.
+
+In analogies, we depend heavily on precedent: not just in the OW, but in the
+NW.lhs. To construct the NW.rhs, we look at the NW.lhs and copy as much as we
+can. We use the OW to figure out how to find, or how to look at, things in the
+NW.lhs.
+
+To construct a delta, we mostly look at what is the same. A delta is a small difference in a large matrix of sameness.
+
+----------------------------------------
+
+MORE COPYCAT PROBLEMS
+
+32b. eeeeqee -> eeeeree; ghghghghghvvvghghghgh -> ?       ghghghghghwwwghghghgh
+
+32c. eeeeqee -> ddddrdd; sosss -> ?                       rprrr
+
+eeeeqee -> ffffqff; sosss -> ?
+   Predominantly[L] -> Predominantly[Succ[L]]
+   PredominantlySucc[L]:
+
+Observation: Humans can take pretty much anything, no matter how meaningless,
+and find a meaning for it. The model should be able to do something like that,
+too.
+
+
+QUESTION If you put in the solution and then switch OW and NW, should the model be able to fill in the original OW.rhs?
+Analog of 32:
+   sosss -> spsss; eeeeqee -> ?
+   will we always get eeeeree as the output?
+
+
+The model should find this problem very ambiguous:
+abc -> abd; pqqrrr -> ?     pqqsss  or  pqqssss?
+There is no one clear winner here.
+  pqqrrrr  is reasonable but it ignores the Succ relation among the letters.
+PRINCIPLE: A good analogy exploits all the structure that's available.
+
+----------------------------------------
+
+28a. mmmmmrjjvvvvb -> mmrrjjvvbb; hcccrrmmmmj -> ?
+
+   Chunk[
+      Chunk[Run[L -> L] Seed[m] Length[5]]
+      Chunk[Run[L -> L] Seed[r] Length[1]]
+      Chunk[Run[L -> L] Seed[j] Length[2]]
+      Chunk[Run[L -> L] Seed[v] Length[4]]
+      Chunk[Run[L -> L] Seed[b] Length[1]]
+   ]
+      
+   All we want to do is copy this but change each Length.
+
+      Chunk[
+         CHUNK[... Length[N]] -> CHUNK[... Length[2]]
+      ]
+
+      Chunk[CHUNK[... Length[N]]...] -> Chunk[CHUNK[... Length[2]]...]           ***
+
+----------------------------------------
+
+43. rmkepdzney -> e; lvwlqua -> ?
+   
+   We need general syntax to designate any part of any term, e.g. "the letter that occurs twice".
+
+   Chunk[... OccursTwice[L]] -> Chunk[L]
+
+   WANT: Ability for the model to "invent" OccursTwice from smaller, more-general elements.
+
+      A term basically means "the model noticed something".
+
+      Some things to notice:
+
+         Contains[r]
+         Contains[k]
+         Contains[e]    <-- occurs twice
+         Contains[r]
+         Contains[p]
+         Contains[d]
+         Contains[z]
+         Contains[n]
+         Contains[e]    <-- occurs twice
+         Contains[y]
+
+      If we give each term an activation, Contains[e] should get double the
+      activation of the rest. That makes it stand out as the Oddball. Standing
+      out is the key concept. Standing out provides a general way to specify
+      any element in any set.  If you provide a different formula for
+      activation, a different element will stand out. If the model has multiple
+      ways of constructing formulae for activation, then it should get a lot of
+      flexibility in how it can select an item from a set.
+
+      Could we define Oddball as "whatever stands out in the set of activations"?
+
+      We could also have Evenball, i.e. each element that is not the Oddball.
+
+
+   Chunk[... Oddball[L]] -> Chunk[L]
+
+      If the model has a general way to distinguish an Oddball, it can cobble up OccursTwice implicitly.
+
+   Focal range (e.g. a certain Chunk, all Runs, all Contains with a Chunk) +
+   activation criterion + selection criterion (most active, stands out, blends
+   in).
+
+43a. bbbbbbkbbb -> b; lvwlqua -> ?     vwqua lvwqua     "Remove the oddball"
+     

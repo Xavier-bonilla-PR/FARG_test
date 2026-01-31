@@ -1,0 +1,158 @@
+3-May-2023
+
+NEW IDEAS
+
+1. Replace Snippets with Spans.
+
+2. Maybe limit the model to Copycat problems.
+
+2a. Maybe implement some memory stuff and in the dissertation tell why it
+doesn't work.
+
+
+PROBLEMS THAT REMAIN TO BE SOLVED       *-optional
+
+1. How to set the length of an empty/unknown canvas/snippet.
+
+2*. How to detect and rebuild a mirror-image relationship.
+
+*. How to make the model be hackable for gradual improvements.
+
+
+HOW TO SET THE LENGTH OF A CANVAS
+
+- Succ applied to canvas length
+- Parameter address to refer to canvas length
+- Clusters can be clustered into larger clusters
+
+p1=Cluster(...)  updates letters
+p2=Cluster(...)  updates length
+p12=Cluster(...)  combines p1 and p2
+
+
+5-May-2023
+
+Choices for today:
+
+-  Read about Knuth-Bendix.  DONE
+-  Work out the reduction rules fully.
+   - CANVAS_RELATION  DONE
+   - DETPAINTER: do determinate painters get into the ws and terms? Yes. DONE
+-  Plan out how to implement the reduction rules.
+-  Work out the cycle/attractor.
+
+
+a2 - b2 = (a + b)(a - b)
+
+
+12-May-2023
+
+Refactoring to change main types  DONE
+
+get rid of RhsType  DONE
+
+define Rvalue  DONE
+
+retype elems_of()  DONE
+
+
+14-May-2023
+
+WHAT REMAINS TO GET TO IJL
+
+Enter all the remaining rules, including for SeqSkip
+
+Diff two repeaters: make a painter that, given one repeater, can make the
+other, specifically by adding or removing Skip.
+
+   Seq, SeqSkip, CANVAS_RELATION -> AddException
+   Seq, SeqSkip, CANVAS_RELATION -> Difference
+
+Notice that Difference could fill c4.
+
+Run the Difference to create the repeater for c4.
+
+Run the repeater, filling c4.
+
+Notice cycle, indicating that the run is done.
+
+
+18-May-2023
+
+Work through examples of latest rules+wholes.
+
+Seq vs. Span. Does one of these lock on to specific indices in the canvas?
+
+Seq/Span vs. Run.
+
+
+19-May-2023
+
+1. Finish one or two more examples.
+
+2. Let's see what rules/wholes/software capabilities are needed to go from
+stage to stage in the current set of examples.
+
+3. What could I write about when I'm too groggy to program or think through
+examples?
+
+
+22-May-2023
+
+1. Do another example with stages only, if needed.
+
+2. Settle Span vs. Chunk vs. Seq.
+
+3. Work out the Rules that go from one stage to the next.
+
+
+24-May-2023
+
+See if the new system can do Doug's problem 32.
+
+See if the new system can do abc->abd; iijjkk->?
+
+See if the new system can do abc->abd; mrrjjj->?
+
+Work out details of solution to bbbbqbbbbttttftthhhbhhh -> bbbbbbbbbttttftthhhbhhh; gggygggbbbubbbbbwwswwww -> ?
+I.e. enough to program it.
+
+Can we still paint a whole string from a partial string?
+Do we still have painters that can reconstruct either of two things given the other?
+
+
+25,26,28,29-May-2023
+
+Following the notes in the 'recipes' file:
+
+   See if the new system can do Doug's problem 32.  DONE: YES
+
+      See how to solve problem 32 with indexicals, e.g. "replace the odd
+      letter with its successor"
+
+   See if the new system can do abc->abd; iijjkk->?  MOSTLY DONE
+
+   Look at VERTICAL-ARROW in 'arrow' file. What limitation of what so far does
+   that rule overcome?
+
+   See if the new system can do abc->abd; mrrjjj->?  This is the example that
+   might force indexicals: the argument to Succ/Skip has to change from a
+   letter to a length. The object of Succ must vary according to context.
+   "Find the thing that is recurring in a Run[Succ]."  MOSTLY DONE: missing
+   quasi-Succ of 'jjj'
+
+   Work out details of solution to bbbbqbbbbttttftthhhbhhh -> bbbbbbbbbttttftthhhbhhh; gggygggbbbubbbbbwwswwww -> ?
+   I.e. enough to program it. The indexicals should tell how to find the
+   letter to replace with the surrounding letter.
+
+   Maybe: can the new system do memory problems like 'ajaqb'?
+
+29-May-2023
+
+   List the program elements.
+
+1-Jun-2023
+
+   List all rewrite rules.
+
+   Document current choice for properties of each term (each type of head).

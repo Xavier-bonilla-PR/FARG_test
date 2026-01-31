@@ -1,0 +1,251 @@
+Agenda for Tue 17-Jan-2023
+
+How to get good at low-level design.
+
+Work out the Completions for p5 (all the way). DONE
+
+Implement p1..p4 using Completions. (tomorrow)
+
+  make_detections  DONE
+
+    Apart  DONE
+
+    Same  DONE
+
+    Succ  DONE
+
+    Pred  DONE
+
+    AnchorAttributes  DONE
+
+      Holds  DONE
+
+      LeftmostIndex  DONE
+
+      RightmostIndex  DONE
+
+      InextremeIndex  DONE
+
+  detections_to_painters  DONE
+
+    p1  DONE
+
+    p3  DONE
+
+  more detections
+
+    Inside  DONE
+
+    FilledWith  DONE
+
+    p2  DONE
+
+    p4  DONE
+
+  regenerate from a____
+
+    try_painters
+
+    Painter.actions
+
+    PainterAction
+
+    Painter.loop_through_principal_variables
+
+    Apart
+
+    Same
+
+    Succ
+
+    Pred
+
+    p1
+
+    p3
+
+    Inside
+
+    FilledWith
+
+    p2
+
+    p4
+
+  more detections
+
+    SameSpatialRelation  DONE
+
+    ConsecutiveLocations  DONE
+
+    p5  DONE
+
+  regenerate from a____
+
+    SameSpatialRelation
+
+    ConsecutiveLocations
+
+    p5
+
+------------------------------------------------------------------------
+
+Apart.complete_me()
+
+    if su[D] is None:
+        return NeedDefined(D)
+
+    match (su[I], su[J]):   "Detection" case
+        case (int(i), int(j)):
+            if j-i = su[D], return NullCompletion
+            else return BottomSubst
+        case (int(i), None):
+            return PaintAt(i + su[D])
+        case (None, int(j)):
+            return PaintAt(j - su[D])
+        case (None, None):
+            return NeedDefined(I, J)
+
+Succ.complete_me()
+
+    match (su[I], su[J]):
+        case (int(i), int(j)):
+            if succ(@i) = @j, return NullCompletion
+            else return BottomSubst
+        case (int(i), None):
+            return PaintValue(succ(@i))
+            unless there is no succ(@i); then return BottomSubst
+        case (None, int(j)):
+            return PaintValue(pred(@j))
+            unless there is no pred(@j); then return BottomSubst
+        case (None, None):
+            return NeedDefined(I, J)
+
+Inside.complete_me()
+
+    match (su[P], su[K]):
+        case (Painter() as p, int(k)):
+            (Need to cascade through p and its related painters to find I and J.)
+            if p.su[I] < K < p.su[J], return NullCompletion
+            else return BottomSubst
+        case (Painter() as p, None):
+            return LoopVariable(K), Condition(I<K<J)
+        case (None, int(i)):
+            if my_anchor_attributes[P] is undefined, return NeedAnchorAttribute[P]
+            #return LoopVariable[I], LoopVariable[J], Condition(I<K<J), MakePainter(my_anchor_attributes[P], I, J)
+            return LoopVariable[I], LoopVariable[J], Condition(I<K<J), MakePainter('P),
+                   PainterAnchorAttributes(P, (anchor_attributes(this_painter), I, J))
+        case (None, None):
+            return NeedDefined(P, K)  exploit information like ConsecutiveLocations to cook up a painter
+
+FilledWith.complete_me()
+
+    match (su[K], su[L]):
+        case (int(k), Letter(l)):
+            if @k = l, return NullCompletion
+            if @k = Blank or None, return PaintAt(k), PaintValue(l)
+            else return BottomSubst
+        case (int(k), None):
+            return NeedDefined(L)   or exploit information in anchor_attributes?
+        case (None, Letter(l)):
+            return PaintAt(K), PaintValue(l)    The K means "need another Completion to supply the value for K".
+        case (None, None):
+            return NeedDefined(K, L)
+
+SameSpatialRelation.complete_me()
+
+    match (su[P], su[Q]):
+        case (Painter() as p, Painter() as q):
+            if both p and q have the same spatial relation in their predicates, return NullCompletion
+            else return BottomSubst
+        case (Painter() as p, None as q):
+            return MakePainter('Q), PainterPredicate(Q, spatial_relation(p))
+        case (None, Painter() as q):
+            return MakePainter('P), PainterPredicate(P, spatial_relation(q))
+        case (None, None):
+            return NeedDefined(P, Q)
+
+ConsecutiveLocations.complete_me()
+
+    match (su[P], su[Q]):
+        case (Painter() as p, Painter() as q):
+            ctype = su[CTYPE]    type of ConsecutiveLocation, "consecutivity"
+            if ctype is None, return LoopThroughCtypes     Caller must run us again.
+            if ctype.match(span(p), span(q)), return NullCompletion
+            else return BottomSubst
+        case (Painter() as p, None as q):
+            return MakePainter('Q), RequiredPainterAttribute(Consecutive(p, Q))
+        case (None, Painter() as q):
+            return MakePainter('P), RequiredPainterAttribute(Consecutive(P, q))   Place a tag on P.
+        case (None, None):
+            return NeedDefined(P, Q)
+
+
+When running p5 given P, we need the following for Q to be fully defined:
+
+    The predicates of p4:
+        Inside
+        FilledWith
+    K=4
+    L='q'
+    P=p3    and p3 must be created
+
+    The predicates of p3:
+        Apart
+        Succ
+    I=3
+    J=5
+
+From this:
+    aja__ p1, p2
+To this:
+    ajaqb p1, p2, p3, p4, p5
+
+Steps:
+    p5 creates IncompletePainter 'Q', with predicates Inside, FilledWith
+        Inside(P=(gap), K=(gap))
+        FilledWith(K=(gap), L='q')
+        RequiredPainterAttribute(Consecutive(p2, 'Q'))  'Q' will be p4
+    'Q' creates p3
+        Try to fill variables P, L, and K, starting from the old p4
+            P must derive from p3, because old p4's P was p3
+            Consecutive(p2, 'Q')
+    'Q' becomes complete, with P=p3, K=4
+
+
+Ideally, the model could generate both of these responses:
+__aja__q__ -> __ajaaaqbb  K=8
+__aja__q__ -> __ajaqbq__  K=6
+
+
+__ajjja_____ -> __ajjjaqqqb_  K=8,9,10
+
+
+At each stage of completing 'Q', there might be multiple, conflicting
+completions. The model should allow them all to grow independently.
+
+
+Could this all be described by a simple term-rewriting system?
+
+
+Painter.do_something()  The main function that loops through the Predicates, assembles their Completions into a PainterCompletion,
+and runs the PainterCompletion to generate ActionProposals.
+
+
+p1.span() should be (1, 3)
+  Apart.span(su) should be (1, 3)
+  Succ.span(su) should be (1, 3)
+p2.span() should be (1, 3)
+  Inside.span(su) should be p1.span(), which is (1, 3)
+  FilledWith.span(su) should be (K, K), which is (2, 2)
+p3.span() should be (3, 5)
+p4.span() should be (3, 5)
+p5.span() should be (1, 5)
+  SameSpatialRelation.span(su) should be union(span(p2), span(p4))
+  ConsecutiveLocations.span(su) should be union(span(p2), span(p4))
+
+
+CLEAN-UPS TO DO
+
+- Make Apart inherit from something other than SpatialRelation, or somehow,
+  in a principled way, make Apart not get detected by SameSpatialRelation.

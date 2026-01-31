@@ -1,0 +1,242 @@
+Plan for the "chunky" model
+---------------------------
+
+Painters
+   class variables: types of arguments
+
+   class method: detect(arg, arg)?
+                 detect(range to search)?
+                 detect(ws)?  <--SIMPLEST
+
+   .complete(ws, *args) -> Optional[Action]
+      Some arguments can be blanks. There can still be blanks in the
+      returned Painter.
+      Some completions may involve painting, e.g. Succ.complete().
+   .complete(ws, have, need)?
+
+   Painter instances must know what Painter they were derived from, so we
+   can fill parameters by looking at how the corresponding parameters were
+   filled in the ancestor painter.
+
+   .is_complete()
+
+   Repeat(Snippet, StartLetter, Operation, Optional[Exception])
+
+      detect(snippet) -> Optional[Repeat]
+         Somewhere we need a flaw-limit parameter.
+
+   Same(Index, Index)
+   Succ(Index, Index)
+   Pred(Index, Index)
+   OtherSide(Snippet, Snippet)
+   OtherSideSameIndex(Index, Index)
+   IndexWithin(Snippet, Index, Index)
+      Need to decide whether the 3rd argument can be a constant.
+   Copy(Letter, Index)
+   other "relative spatial relations"
+
+Tags?
+   Leftmost
+   Rightmost
+   Inextreme
+
+Except
+   Skip(Index)
+   Replace(Index, Content)
+
+Seed
+
+BasedOn
+
+Content is Letter or Snippet, i.e. something that can go into one "cell" of a
+Snippet.
+
+Workspace
+   the master Subst
+      all the painters
+   all the snippets, including the master canvas
+   a list of "painters pending completion"
+      or maybe these are just painters with blanks
+      or a function that lists all the pending completions
+   a function to find all the painters that refer to the variables in a given
+      painter.
+   a function to find the arguments to pass to a new painter, that correspond
+      to the arguments passed to its ancestor.
+
+Model / top level
+   a function to detect relations bottom-up
+   a function to ask all the painters what action they propose
+   a function to choose which action to do
+
+Canvas/Snippet
+   Needs an address, e.g. C.O.lhs.1
+   The elements may themselves be snippets
+   Painting to a snippet in a place that conflicts with something already
+      there creates a competing snippet.
+
+Variables
+   names, types, values
+   Assign names automatically, indicating type (e.g. K2)
+   function to see which painters refer to a given variable
+   Track the analogy or cascade in which a variable was created, so multiple
+   "users" don't create multiple instances of it.
+   function to find "What variable in the ancestral painter corresponds to
+   this argument slot?"
+
+Searches
+   . . . various search functions (these will change in each version)
+   A lookup table to determine when to run each search, or maybe just have a
+      list of processes that should occur each timestep.
+      FIGURE OUT THIS TABLE FIRST
+
+Spreading activation
+      
+
+Reporting
+   Each timestep, display:
+      Canvas(es)
+      Incomplete elements
+      Painters
+      Variables and who refers to them
+
+      A graph of these might be nice.
+
+   Displaying activity:
+      Painters queried
+      Actions generated
+      Action chosen
+
+------------------------------------------------------------------------
+
+Sequence in which to implement things
+
+Goal: get to 'abc->abd; ijk->?' as early as possible.
+
+
+Canvas
+   Letter
+   Blank
+   Span
+      Within another Canvas.
+      An easy way to extract the Span: either a Span specified when
+      the Canvas is created, or a Span derived from what's put in the
+      Canvas.
+   Recombine Canvases based on their spans.
+
+Parse 'abc->abd; ijk->?' into snippets (canvases).
+
+Painters referring to elements of Canvases, like their Spans, or elements
+of anything else.
+
+Repetition detection
+   flaw limit
+   Succ
+   Pred
+   Same
+   Skip
+   Replace
+   Insert
+
+Subst
+   generate a variable name
+
+Seed
+
+Painters
+   Repeat
+   OtherSide
+   OtherWorld
+
+   Exception
+
+Differ
+
+Absorb (make painters for Old World)
+
+Regenerate (make painters for New World)
+
+Tags
+
+Spreading activation
+
+
+Test cases:
+
+   Make 'abc', query its length.  DONE
+
+   Detect repetition: 'abc'
+
+      Same, Succ, Pred  DONE
+
+      no repetition: 'aqb'
+
+      What sort of repetition should 'a' return?
+
+   Canvas return None for nonexistent element
+
+   Parse 'abc->abd; ijk->?' into four snippets.
+
+      Canvas addresses
+
+      Assign to snippet variables
+
+      OtherSide: tag the snippets 'lhs' and 'rhs'
+
+      OtherWorld: tag the snippets 'old-world' and 'new-world'
+
+   Repeat(S, Seed('a', 1), Succ) => 'abc'
+
+      address failure somehow
+
+      Repeat with exception (generate 'abd')  DONE
+
+      run_painter with undefined variable
+
+   Detect repetition with flaw: 'abd'  DONE
+
+   Run OtherSide(S1, SS)  NEXT
+
+   Run a painter cluster: Arrow(RR1, RR2, SS1, SS2, DD, FF, GG)
+
+   Diff R1 and R2 to get Arrow (as in 'ijl-cluster').
+
+      Run Repeat with variables
+
+   Run Arrow(RR1=R3), get 'ijl'.
+
+
+   Succ(1, 3)
+
+
+   Make 'jj' a subsnippet of 'iijjkk'.
+
+   Combine 'ii', 'jj', 'll' into 'iijjll'.
+
+   ... more stuff, for spreading activation, tags
+   
+
+
+---------------
+TODO
+
+Canvas:  Unknown should have None for length
+ length: Optional[int]
+
+What should parse_analogy_string() do if it fails?
+
+test_repeat_succ():
+   ws = Workspace()
+   ws.make_canvas('C', length=3)
+   repeat = Repeat('C', Seed('a', 1), Succ)
+   repeat.fill(ws)
+   self.assertEqual(str(ws.get_canvas('C')), 'abc')
+
+--------------------
+TEST CASE FOR PAINTER CLUSTER
+
+Cluster(D1, D2, L1, L2, I1)
+D1=Seed(L1, I1)
+L1=Letter('a')
+I1=1
+D2=Seed(L2, I1)
+L2=Letter('i')

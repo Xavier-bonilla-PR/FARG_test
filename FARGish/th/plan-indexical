@@ -1,0 +1,347 @@
+30,31-May-2023, 1-Jun-2023
+
+PLAN for INDEXICAL MODEL
+
+
+LIST OF ALL TERM KEYWORDS
+
+    Chunk
+    ...
+    Predominantly
+    Oddball
+    Succ
+    Same
+    Pred
+    Run
+    Seed
+    Advance
+    ReplaceWith
+    ReplaceAt
+    Length
+    RelativeTo
+    First
+    Last
+
+    ExpandedVia ?
+
+OTHER ELEMENTS
+
+    A set of Rules for creating terms; a set of Rules is the condition for an experiment.
+
+
+DETAILED DESCRIPTIONS OF TERMS
+
+    Chunk
+
+        Contains either sequential or unordered elements.
+
+            Sequential:
+
+                letters                 Chunk[mrgu]
+
+                Chunks                  Chunk[Chunk[Run[Same] Seed[m] Length[1]], Chunk[Run[Same] Seed[r] Length[2]]]
+
+            Unordered:
+
+                Run[]                   A Chunk[Run[]...] is what used to be Repeat[Op[]...]
+
+                Seed[]
+
+                Length[]
+
+                ReplaceWith[]
+
+                ReplaceAt[]
+
+                AdvanceAt[]
+
+
+                Predominantly[]         If the Chunk is an annotation, we can find out the original Chunk or Span that is Predominantly something.
+
+                Odd[]
+
+                OddAt[]
+        
+        mrrjjj - Chunk[mrrjjj] - Chunk[Chunk[m], Chunk[rr], Chunk[jjj]]
+                                 Chunk[Chunk[m], Chunk[rr Run[Same] Seed[r] Length[2] Predominantly[r]]
+
+                                 m: Chunk[m]
+                                 rr: Chunk[rr]
+                                 rr: Chunk[Run[Same] Seed[r] Length[2]]
+                                 rr: Chunk[Predominantly[r]]
+
+                                 mrrjjj: Chunk[
+                                     Chunk[Run[L -> L] Seed[m] Length[1]],
+                                     Chunk[Run[L -> L] Seed[r] Length[2]],
+                                     Chunk[Run[L -> L] Seed[j] Length[3]]
+                                  ]
+
+WORKSPACE CONTENTS
+
+    canvas:    The whole Copycat problem.
+
+    span: Term    One of these for combination of span and annotation.
+
+
+REWRITE RULES: see something, make an annotation for it
+
+    run of consecutive A->B  =>  Chunk[Run[] Seed[] Length[]]
+        That is, the input to the rewrite rule is a sequence of items that have the same delta for each pair of consecutive items; the output
+        is a Chunk that includes the delta explicitly inside a Run term.
+
+    aa  =>  Same[]
+
+    ab  =>  Succ[]
+
+    ba  =>  Pred[]
+
+    run of consecutive A->B, with advanced item  =>  Chunk[Run[] Seed[] Length[] AdvanceAt[]
+
+    run of consecutive A->B, with altered item  =>  Chunk[Run[] Seed[] Length[] ReplaceWith[] ReplaceAt[]
+
+    collection of mostly X  =>  Predominantly[]
+
+    Y in a collection of mostly X  =>  Oddball[Y]
+
+
+    TODO other ways to get Oddball[]
+
+    NEXT PROGRAMMING
+        Write top-level code:  (Maybe then comment it out and write lower-level code.)
+            Call RewriteRules to generate new terms.
+
+            Call Deltas to fill in blanks.
+
+        Make a RewriteRule class, which has a method to look at something and (optionally) create an annotation for it.
+
+        Make a Delta class, which has a method to match something on a lhs and construct a rhs.
+
+        Rewrite Run[] so its argument is a Delta.
+
+        Make a small collection or RewriteRules (from the above descriptions)
+
+        Make a Workspace. It contains Terms, i.e. annotations and deltas.
+
+         
+
+
+MAKING DELTAS
+
+    Given two items (letters, terms, deltas), the make-delta function determines if they're similar enough to have a rule
+    saying "where you see the left term, map it to the right term". If so, make-delta might replace some of the constants
+    in the terms with variables. The output of make-delta, i.e. a delta, has a -> in it.
+
+    Examples:
+
+        a, b  =>  L -> Succ[L]
+
+        a, a  =>  L -> L
+
+        b, a  =>  L -> Pred[L]
+
+        abc, xyz  =>  abc -> xyz
+
+        Chunk[Run[Succ]], Chunk[Run[Succ] AdvanceAt[Last]]  =>  Chunk[...] -> Chunk[... AdvanceAt[Last]]
+
+        3, 3  =>  N -> N
+        3, 4  =>  N -> N+1
+
+
+
+        
+    make-delta rules:
+
+
+    What are deltas used for?
+
+        1. To construct consecutive elements in a Run.
+
+        2. To fill out partial matches, especially to fill the blank in the NW.rhs by partial match with NW.lhs.
+
+
+
+SOME PRINCIPLES
+
+    "Context is container"
+    If a term needs a context in order to paint, that context will be its container. E.g. Run[L -> L] needs Seed
+    and Length to paint; these are to be found in the Chunk that contains the Run.
+
+        So, Oddball and Predominantly each paint into their parent Chunk.
+
+    Oddball paints after Run and Predominantly, i.e. Oddball overwrites whatever they write.
+
+
+SEQUENCE OF ACCEPTANCE TESTS TO WRITE
+
+Basic term-rewriting tests
+
+    (matching/filling variables)
+
+
+Chunk tests
+
+    Chunk[abc]   paint 'abc'
+
+    Chunk[Run[L -> L] Seed[m] Length[3]]   paint 'mmm'
+
+    Chunk[Run[L -> Succ[L]] Seed[a] Length[3]]   paint 'abc'
+
+    Chunk[Run[L -> Pred[L]] Seed[c] Length[3]]   paint 'cba'
+
+    A Rule that can rewrite 'mmm' as Chunk[Run[L -> L] Seed[m] Length[3]]
+
+    A Rule that can rewrite 'abc' as Chunk[Run[L -> Succ[L]] Seed[a] Length[3]]
+
+    A Rule that can rewrite 'cba' as Chunk[Run[L -> Pred[L]] Seed[c] Length[3]]
+
+    Match Chunk[Run[L -> L] Seed[m] Length[3]] against 'mmm': yes (it's a match)
+        (Impl.: Just generate the output and compare against 'mmm'?)
+
+    Match Chunk[Run[L -> L] Seed[m] Length[3]] against 'aaa': no
+
+    Match Chunk[Run[L -> L] Seed[m] Length[3]] against 'mm_': yes, and fill the blank
+
+    In 'iijjkk', make Chunk[Run[Same] Seed[i] Length[2]]
+
+    Given three Chunks for ii,jj,kk, make:
+        Chunk[
+           Run[Seed[L] -> Seed[Succ[L]]]
+           Seed[Chunk[Run[Same] Seed[i] Length[2]]]
+           Length[3]
+        ]
+
+    Given that nested Chunk, make the ii,jj,kk Chunks, and make 'iijjkk'.
+
+    Chunk[Run[L -> Succ[L]] Seed[a] Length[3] Advance[Last]]   paint 'abd'
+
+    A Rule that can rewrite 'abd' as Chunk[Run[L -> Succ[L]] Seed[a] Length[3] Advance[Last]]
+
+    Match Chunk[Run[L -> Succ[L]] Seed[a] Length[3] Advance[Last]] against 'abd': yes
+
+    Match Chunk[Run[L -> Succ[L]] Seed[a] Length[3] Advance[Last]] against 'ggg': no
+
+    Match Chunk[Run[L -> Succ[L]] Seed[a] Length[3] Advance[Last]] against '_bd': yes, and fill the blank
+
+    Chunk[gc Run[L -> L] Seed[a] Length[3]]   paint 'gcabc'
+    Or maybe not: 'gc' is ordered; Run, etc. is not.
+
+Delta tests
+
+    Making deltas:
+
+        Given a, b make L -> Succ[L]
+
+        Given a, a make L -> L
+
+        Given b, a make L -> Pred[L]
+
+        Given Chunk[rb], Chunk[rbn], make Delta[Chunk[rb] -> Chunk[rbn]]
+                                          Delta[Chunk[SEQ] -> Chunk[SEQ n]]
+
+        Given Chunk[Predominantly[e] Length[4] Oddball[q] OddballAt[2]],
+              Chunk[Predominantly[e] Length[4] Oddball[r] OddballAt[2]]
+        make Odd[L] -> Odd[Succ[L]]
+         or? Chunk[... Odd[L]] -> Chunk[... Odd[Succ[L]]]
+       
+
+
+    Applying deltas:
+
+        Apply Delta[Chunk[SEQ] -> Chunk[SEQ n]] to 'rb', get 'rbn'
+
+
+
+
+
+Oddball and Predominantly
+
+    Chunk[Predominantly[e] Length[4]]   paints 'eeee'
+
+    Chunk[Predominantly[e] Length[4] Oddball[q At[2]]]   paints 'eqee'
+
+    Chunk[Predominantly[e]]             squeals: needs Length
+
+
+
+
+    
+FUNDAMENTAL OPERATIONS
+
+    Span to Chunk
+        Recognize a Run
+        Recognize Predominantly
+
+    Recognize Oddball
+
+    Chunk to Span (i.e. paint letters)
+        Carry out a Run
+        Fill from Predominantly
+
+    Oddball paints over Span after other terms are done
+
+    Multiple Chunks to Compound Chunk, e.g. ii, jj, kk to ii,jj,kk
+
+    Make Delta from two terms
+        Constants to variables, for the parts that are the same
+        Swallow up ...
+
+    Apply Delta to term(s), filling blank
+
+    Match variables in a term to another term
+
+    Spot opportunity to apply a term or rule
+
+    Flesh-out(term, context) -> fleshed-out term
+        E.g. find missing Length and Seed
+
+SHORT PATH TO MEANINGFUL OUTPUT
+
+    Span to Chunk (Run)
+        abc, abd, ijk, ?
+
+    Chunk (Run) to Span
+        abc, abd, ijk
+
+    Make Delta from two terms
+        abc->abd
+
+    Run Delta
+        ijk->?
+
+
+TESTS FOR STAGES IN COPYCAT PROBLEMS
+
+Problem 32  eeeeqee -> eeeeree; sosss -> ?
+
+    See that there are a lot of e's in 'eeeeqee'. Make:
+      eeeeqee: Predominantly[e]
+        Span[1 7 Predominantly[e]]
+
+    See that there is just one 'q' in 'eeeeqee'. Make:
+      eeeeqee: Oddball[q]
+
+    Make delta between OW.lhs and OW.rhs:
+      Chunk[... Oddball[L]] -> Chunk[... Oddball[Succ[L]]]
+
+    
+
+IDEAS FOR MORE TERMS/FEATURES
+
+Something to mark off the limits of a span; the resulting span is part of another term (like a Chunk).
+
+MirrorImage[...]  applies recursively to its body.
+    Run[CHUNK -> MirrorImage[CHUNK]]
+
+
+IMPLEMENTATION IDEAS
+
+    (0 means OW.lhs, 1 means OW.rhs, etc.)
+    global_subst = {0:{predominantly[], oddball[], Chunk}, 1: {}, 2: {}, 3: {}}
+                   {0:{__, __, 0:{}, 1:{}
+                   {eeeeqee:{__, __, eeee:{}, q:{}, ee:{}}
+
+        aaaabbtbccc
+
+        abcdiekltuvw   'k' is the Oddball in the 2nd Chunk
+
+    Maybe better: let each key be a Span; each value is a descriptor.

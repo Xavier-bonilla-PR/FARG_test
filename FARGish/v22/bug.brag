@@ -1,0 +1,7 @@
+#lang brag
+
+start : elem*
+
+elem : THING "(" arg ("," arg)* ")"
+
+arg : IDENTIFIER [ ":" IDENTIFIER ]

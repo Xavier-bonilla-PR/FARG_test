@@ -1,0 +1,145 @@
+Watchers
+
+  Callable objects that take as arguments:
+    host graph
+    set of nodes in host graph
+  and return a list of responses, each of which has:
+    salience  (for a random weighted choice of which response to enact)
+    action  (function that acts on the host graph)
+
+
+Accept numble from keyboard
+
+
+Main loop:
+    Run all of a set of watchers
+
+Mustang Sally / Demo 1:
+    FoundWanted: avail consumer -- wanted source
+    FoundWanted: Declare victory if Avail matches Target
+    Watcher for when an Avail Number equals the Target.
+    Watcher to combine Avail Numbers.
+    'Consume' removes Avail, produces Block.
+    Do arithmetic in Python. Actually solve any numble, though crudely.
+    Try combining Avail Numbers randomly.
+    When there are no Avails and no solution, tag something with Failed.
+    Print the graph symbolically, showing the current "thought".
+
+Print random-number seed.
+Take random-number seed as argument.
+
+Print bottom-up "equation".  pg(g), NumboGraph.blocks_str()
+
+
+Demo 2
+
+   Fix solution string.
+
+   Do only one Response per timestep
+      Print list of Responses
+      Choose one randomly
+      Went back to multiple Responses per timestep so that BoostSalience
+      didn't starve all the other Response types.
+
+   choose by salience of Response  DONE
+   decay salience
+
+    set Response salience
+        favor Consummating a Wanted node
+    finer granularity for CouldMakeFromOperands
+        First tag Avail with CouldBeOperand.
+        Then CouldMakeFromOperandsTagger triggers when it sees
+        two numbers tagged CouldBeOperand.
+
+Demo 3
+
+    Main idea:
+        Give more weight to promising CouldMakeFromOperands tags.
+        Hopefully that will solve more easy problems (without backtracking).
+
+    WantFullySourced: huge support
+        Hopefully that will favor "wins".  DONE not much effect
+
+    Edge weights in support
+    
+    Fixed .getting_closer().
+    Crude, constant (0.1) weight for "closer" node regardless of how close.
+
+Demo 4
+
+    Brick: do not return support to CouldMakeFromOperands.
+        This works better: solved 1 1 1 1 1; 6 on first try.
+        But with seed=8048827927063357261, got gigantic salience (400.0+)
+        for a couple GiveSupport responses at t=102,103.
+
+    .candidate_nodes_wsal()
+    NodeWithSalience
+
+    Close by 1
+        CloseTo  DONE
+        CloseNumbersScout  DONE
+
+    Notice the 1
+        Wanted:
+            Support CloseTo->N
+            Consume Avail Numbers that = Wanted
+            GiveSupport to Close makeable Numbers
+
+    SameNumber tag
+        SameNumberScout
+        Wanted should look at this tag rather than search on its own
+
+Remove unnecessary classes from numbo.py. FoundWanted?, etc.
+
+TagWith2: Don't double-tag
+
+CouldMakeFromOperands should start with very low support. (BUG FIX)
+
+Fix the unit tests.
+
+    Parameterize support in a Propagator object.
+
+View
+
+  A node that "sees" all nodes of a given kind, like "Number nodes tagged
+  Avail", auto-updated. The View can track collective attributes of the
+  nodes it's watching, such as the maximum Number, the number of Numbers,
+  a number-line representation, etc.
+
+    Notify every View whenever:
+    
+        a new node is created.
+
+        one of its viewees is touched.
+
+        one of its viewees is removed.
+
+    The above is done by calling the View near the end of do_touches(),
+    passing it all the new and touched nodes.
+
+  Permanent support to OperandView. (HACK)  DONE
+
+  Support/oppose only CouldMakeFromOperands nodes.  DONE
+
+Don't make multiple CouldMakeFromOperands for same operands & operation.
+
+Mult * 1 => oppose CouldMakeFromOperands
+Plus + 0 => oppose CouldMakeFromOperands
+
+Demo 5
+
+    Numble goal: 3 3 3; 27
+
+
+testNodeSpec.py
+
+    UT And  DONE
+    UT Not  DONE
+    UT CartesianProduct  DONE
+    UT NotLinkedToSame  DONE
+    UT NoDups  DONE
+    UT TupAnd  DONE
+
+Get expr working with numbo3b.py  DONE
+
+
