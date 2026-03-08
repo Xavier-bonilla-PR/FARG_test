@@ -114,20 +114,38 @@ class Consume(Agent):
         return result
 
     def can_act(self, fm):
+        # Allow acting from ImCells if they're tagged as promising (GettingCloser)
+        from FARGish2 import ImCell
+        source_is_ok = (
+            is_real(self.source)
+            or
+            (isinstance(self.source, ImCell) and
+             any(isinstance(tag, GettingCloser) and tag.taggee == self.source
+                 for tag in fm.elems(GettingCloser)))
+        )
         return (
             self.have_all_args()
             and
-            is_real(self.source)
+            source_is_ok
             and
             not fm.is_blocked(self)
         )
 
     def act(self, fm, **kwargs) -> CellRef:
         # TODO throw if there are any imaginary CellRefs
+        from FARGish2 import ImCell, CellRef
+
         if kwargs.get('source', None) is None:
             kwargs['source'] = self.source
         if kwargs.get('dest', None) is None:
-            kwargs['dest'] = kwargs['source'].next()
+            source = kwargs['source']
+            # If source is an ImCell, paint to real canvas instead of another ImCell
+            if isinstance(source, ImCell):
+                # Get the real canvas and paint to its next cell
+                last_cell = source.canvas.last_nonblank()
+                kwargs['dest'] = CellRef(canvas=source.canvas, addr=last_cell.addr + 1)
+            else:
+                kwargs['dest'] = source.next()
         result = self.paint(fm, **kwargs)
         fm.build(ActIsDone(taggee=self))
         return result
@@ -311,7 +329,52 @@ class Want(Agent):
             )
 
     def act(self, fm: FARGModel):
-        pass
+        '''When Want wakes up, re-consult slipnet to build Consume agents
+        for new promising states (both real canvas and imaginary ImCells).'''
+        # Consult for real canvas states
+        self.consult_slipnet(fm)
+
+        # Also consult for promising imaginary states
+        self.consult_slipnet_for_promising_states(fm)
+
+        self.update_support(fm)
+
+    def consult_slipnet_for_promising_states(self, fm: FARGModel):
+        '''Find ImCells tagged with GettingCloser and build Consume agents
+        for those promising intermediate states.'''
+        from FARGish2 import ImCell
+
+        # Find GettingCloser tags for this target (convert to list to avoid mutation during iteration)
+        for gc_tag in list(fm.elems(GettingCloser)):
+            if gc_tag.target == self.target and isinstance(gc_tag.taggee, ImCell):
+                imcell = gc_tag.taggee
+                if hasattr(imcell.contents, 'avails'):
+                    # This is a promising state - build Consume agents for it
+                    source = imcell  # Use the ImCell as source
+                    avails = imcell.contents.avails
+
+                    # Activate slipnet with available numbers
+                    activations_in = {}
+                    for avail in avails:
+                        activations_in[Before(avail)] = 1.0
+                    activations_in[After(self.target)] = 0.1
+                    if all(avail > self.target for avail in avails):
+                        activations_in[Increase()] = 10.0
+
+                    # Don't use Exclude filter for promising states - we want to build
+                    # operations even if they exist for other sources (like canvas[0])
+                    agents = fm.pulse_slipnet(
+                        activations_in, k=20, type=Agent, num_get=5
+                    )
+
+                    # Build Consume agents with this ImCell as source
+                    for agent in agents:
+                        if isinstance(agent, Consume):
+                            agent = replace(agent, source=source)
+                        fm.build(agent, builder=self, init_a=0.1)
+
+    def can_act(self, fm: FARGModel):
+        return not fm.is_blocked(self)
 
     def can_go(self, fm: FARGModel):
         return not fm.is_blocked(self)
