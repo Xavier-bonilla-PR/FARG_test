@@ -308,4 +308,92 @@ class IntFeatures(Slipnet):
         else:
             yield from super().default_features(x)
 
+@dataclass(frozen=True)
+class NumberNode:
+    '''Represents a number as a node in the slipnet.'''
+    value: int
+
+    def __str__(self):
+        return f'Num({self.value})'
+
+    def __hash__(self):
+        return hash(('NumberNode', self.value))
+
+class NumericSlipnet(IntFeatures):
+    '''Slipnet with numeric proximity relationships.'''
+
+    def add_number_nodes(self, lb: int = 1, ub: int = 100):
+        '''Add number nodes and proximity links to the slipnet.
+
+        Args:
+            lb: Lower bound of number range
+            ub: Upper bound of number range
+        '''
+        # Create nodes for each number
+        number_nodes = {}
+        for n in range(lb, ub + 1):
+            node = NumberNode(n)
+            self.add_node(node)
+            number_nodes[n] = node
+
+        # Add proximity links between numbers
+        # Link strength decreases with distance
+        for n in range(lb, ub + 1):
+            node = number_nodes[n]
+            # Link to nearby numbers (within distance 20)
+            for offset in range(1, 21):
+                # Link to n+offset
+                if n + offset <= ub:
+                    neighbor = number_nodes[n + offset]
+                    # Strength decreases with distance
+                    strength = 1.0 / (1.0 + offset)
+                    self.add_edge(node, neighbor, weight=strength)
+
+                # Link to n-offset (only if different from n+offset)
+                if n - offset >= lb and offset > 0:
+                    neighbor = number_nodes[n - offset]
+                    strength = 1.0 / (1.0 + offset)
+                    self.add_edge(node, neighbor, weight=strength)
+
+    def set_target_activation(self, target: int, activation: float = 1.0):
+        '''Set initial activation for target number and spread to nearby numbers.
+
+        Args:
+            target: The target number
+            activation: Initial activation level (default 1.0)
+
+        Returns:
+            Dictionary of activations after spreading
+        '''
+        target_node = NumberNode(target)
+        if target_node not in self.nodes:
+            return {}
+
+        # Initialize with target node activated
+        activations_in = {target_node: activation}
+
+        # Propagate activation through the network
+        activations_out = self.dquery(activations_in=activations_in)
+
+        return activations_out
+
+    def get_number_activation(self, value: int, activations: Dict = None) -> float:
+        '''Get activation level of a number node.
+
+        Args:
+            value: The number to query
+            activations: Optional pre-computed activation dictionary
+
+        Returns:
+            Activation level (0.0 if number not in slipnet)
+        '''
+        node = NumberNode(value)
+        if activations is not None:
+            return activations.get(node, 0.0)
+        elif node in self.nodes:
+            # Query fresh if no activations provided
+            return 0.0  # Default to no activation
+        else:
+            return 0.0
+
 empty_slipnet = Slipnet()

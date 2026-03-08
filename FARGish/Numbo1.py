@@ -20,7 +20,7 @@ from FARGish2 import FARGModel, Elem, Value, SeqCanvas, Addr, Agent, AgentSeq, \
     SeqState, Halt, Glom, \
     StateDelta, ValueNotAvail, ValuesNotAvail, CellWithAvailValue, is_real, \
     GoIsDone, ActIsDone, match_wo_none, has_avail_value, dig_attr
-from Slipnet import Slipnet, FeatureWrapper, IntFeatures
+from Slipnet import Slipnet, FeatureWrapper, IntFeatures, NumericSlipnet, NumberNode
 from util import is_iter, as_iter, as_list, pts, pl, pr, csep, ssep, \
     as_hashable, backslash, singleton, first, tupdict, as_dict, short, \
     sample_without_replacement
@@ -296,11 +296,19 @@ class Want(Agent):
     target: Value = None
     canvas: SeqCanvas = None
     addr: Addr = None  # Addr of the start state, before
+    _target_activations: Dict[Hashable, float] = field(default_factory=dict, compare=False, hash=False)
 
     max_a: ClassVar[float] = 4.0
 
     def on_build(self, fm: FARGModel):
         fm.add_mut_support(self, self.canvas)
+        # Compute target activations when Want is built
+        if hasattr(fm.slipnet, 'set_target_activation'):
+            object.__setattr__(
+                self,
+                '_target_activations',
+                fm.slipnet.set_target_activation(self.target)
+            )
 
     def act(self, fm: FARGModel):
         pass
@@ -361,14 +369,34 @@ class Want(Agent):
         # for what's promising and apply tags. It shouldn't be hard-coded
         # in the Want class.
         if isinstance(elem, Consume):
-            result = 0.0
+            base_support = 0.2  # Base level for valid operations
+
             if fm.is_blocked(elem):
-                result += 0.1
-            else:
-                result += 0.2
-                if fm.can_act(elem):
-                    result += 0.2
-            return result
+                return 0.1
+
+            # Try to simulate the operation to get the result
+            if elem.operator is not None and elem.operands is not None:
+                try:
+                    result = elem.operator.call(*elem.operands)
+                    # Query slipnet activation for this result
+                    if hasattr(fm.slipnet, 'get_number_activation'):
+                        activation = fm.slipnet.get_number_activation(
+                            result,
+                            self._target_activations
+                        )
+                        # Scale activation to get support
+                        # High activation near target → high support
+                        slipnet_support = activation * 2.0  # Scale factor
+                        return base_support + slipnet_support
+                except (TypeError, ValueError, ZeroDivisionError):
+                    # If simulation fails, return base support
+                    pass
+
+            # Fallback: base support
+            if fm.can_act(elem):
+                return base_support + 0.2
+            return base_support
+
         elif isinstance(elem, CellRef):
             #return 2.0 if elem.contents == self.target else 0.0
             return 20.0 if has_avail_value(elem.contents, self.target) else 0.0
@@ -417,12 +445,13 @@ class SequentialBefore:
     lb: Any
     ub: Any
 
-class SlipnetWithInt(IntFeatures, Slipnet):
+class SlipnetWithInt(NumericSlipnet):
     pass
 
 class Numbo(FARGModel):
 
     def make_slipnet(self):
+        # Create slipnet with Consume agents
         self.slipnet = SlipnetWithInt(
             Consume(operator, (a, b))
                 for a in range(1, 11)
@@ -430,6 +459,8 @@ class Numbo(FARGModel):
                 for operator in [plus, times, minus]
                     if a >= b
         )
+        # Add number nodes with proximity links (range 1-100)
+        self.slipnet.add_number_nodes(lb=1, ub=100)
 
     # TODO rm this; should only happen in base class
 #    def nodes_to_log(self):
