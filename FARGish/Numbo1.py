@@ -8,6 +8,7 @@ from typing import Union, List, Tuple, Dict, Set, FrozenSet, Iterable, Any, \
 import operator
 from operator import itemgetter, attrgetter
 from collections import Counter
+from itertools import combinations_with_replacement
 import math
 from numbers import Number
 
@@ -359,7 +360,13 @@ class Want(Agent):
 
     def consult_slipnet_for_promising_states(self, fm: FARGModel):
         '''Find ImCells tagged with GettingCloser and build Consume agents
-        for those promising intermediate states.'''
+        for those promising intermediate states.
+
+        HYBRID APPROACH:
+        - For small numbers (≤10): query slipnet for familiar operations
+        - For large numbers (>10): directly construct Consume agents from actual avails
+        This is cognitively plausible: humans have 3+4 pre-stored, but not 17+38.
+        '''
         from FARGish2 import ImCell
 
         # Find GettingCloser tags for this target (convert to list to avoid mutation during iteration)
@@ -369,27 +376,39 @@ class Want(Agent):
                 if hasattr(imcell.contents, 'avails'):
                     # This is a promising state - build Consume agents for it
                     source = imcell  # Use the ImCell as source
-                    avails = imcell.contents.avails
+                    avails = sorted(imcell.contents.avails, reverse=True)
 
-                    # Activate slipnet with available numbers
-                    activations_in = {}
-                    for avail in avails:
-                        activations_in[Before(avail)] = 1.0
-                    activations_in[After(self.target)] = 0.1
-                    if all(avail > self.target for avail in avails):
-                        activations_in[Increase()] = 10.0
+                    # Check if we have any large numbers (outside slipnet's pre-stored range)
+                    large_avails = [a for a in avails if a > 10]
 
-                    # Don't use Exclude filter for promising states - we want to build
-                    # operations even if they exist for other sources (like canvas[0])
-                    agents = fm.pulse_slipnet(
-                        activations_in, k=20, type=Agent, num_get=5
-                    )
+                    if large_avails:
+                        # DIRECT CONSTRUCTION: build Consume agents from actual avails
+                        # This is more efficient than querying slipnet (which has nothing
+                        # for operands >10) and returns only executable operations.
+                        for a, b in combinations_with_replacement(avails, 2):
+                            for op in [plus, minus, times]:
+                                if a >= b:
+                                    agent = Consume(op, (a, b), source=source)
+                                    fm.build(agent, builder=self, init_a=0.1)
+                    else:
+                        # SLIPNET QUERY: for small numbers, use spreading activation
+                        # to find familiar operations
+                        activations_in = {}
+                        for avail in avails:
+                            activations_in[Before(avail)] = 1.0
+                        activations_in[After(self.target)] = 0.1
+                        if all(avail > self.target for avail in avails):
+                            activations_in[Increase()] = 10.0
 
-                    # Build Consume agents with this ImCell as source
-                    for agent in agents:
-                        if isinstance(agent, Consume):
-                            agent = replace(agent, source=source)
-                        fm.build(agent, builder=self, init_a=0.1)
+                        agents = fm.pulse_slipnet(
+                            activations_in, k=20, type=Agent, num_get=5
+                        )
+
+                        # Build Consume agents with this ImCell as source
+                        for agent in agents:
+                            if isinstance(agent, Consume):
+                                agent = replace(agent, source=source)
+                            fm.build(agent, builder=self, init_a=0.1)
 
     def can_act(self, fm: FARGModel):
         return not fm.is_blocked(self)
