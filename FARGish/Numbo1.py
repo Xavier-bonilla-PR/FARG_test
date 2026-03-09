@@ -93,7 +93,11 @@ class Consume(Agent):
 
     def can_go(self, fm):
         # TODO Return False if we painted an ImCell from .source
-        return not fm.is_blocked(self)
+        return (
+            self.have_all_args()
+            and
+            not fm.is_blocked(self)
+        )
 
     def go(
         self,
@@ -155,6 +159,8 @@ class Consume(Agent):
             self.operator is not None
             and
             self.operands
+            and
+            all(op is not None for op in self.operands)
         )
 
     # TODO rm
@@ -327,6 +333,15 @@ class Want(Agent):
                 '_target_activations',
                 fm.slipnet.set_target_activation(self.target)
             )
+        # Build detector and tagger once when Want is created
+        fm.build(
+            Detector(self.target, action=RaiseException(SolvedNumble)),
+            builder=self
+        )
+        fm.build(
+            GettingCloser.Tagger(target=self.target),
+            builder=self
+        )
 
     def act(self, fm: FARGModel):
         '''When Want wakes up, re-consult slipnet to build Consume agents
@@ -383,15 +398,7 @@ class Want(Agent):
         return not fm.is_blocked(self)
 
     def go(self, fm: FARGModel):
-        # TODO Don't build these if they're already built
-        fm.build(
-            Detector(self.target, action=RaiseException(SolvedNumble)),
-            builder=self
-        )
-        fm.build(
-            GettingCloser.Tagger(target=self.target),
-            builder=self
-        )
+        # Detector and GettingCloser.Tagger are now built in on_build()
         self.consult_slipnet(fm)
         self.update_support(fm)
         fm.sleep(self)

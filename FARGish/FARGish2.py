@@ -673,14 +673,37 @@ class FARGModel:
             self.remove_sleepers()
             self.run_detectors()
             if ag is None:
-                # Prioritize action over deliberation
-                actor = self.choose_agent_by_activation(CanAct)
-                if actor:
-                    agent = actor
-                    run = CallAct
+                # Balance deliberation and action based on timestep
+                # Early on, strongly prefer deliberation to build ImCells
+                # Later, prefer action to execute on promising paths
+                import random
+                # First 20 timesteps: 10% act, 90% deliberate
+                # Timesteps 20-40: 40% act, 60% deliberate
+                # After 40: 70% act, 30% deliberate
+                if self.t < 20:
+                    should_try_act = random.random() < 0.1
+                elif self.t < 40:
+                    should_try_act = random.random() < 0.4
                 else:
+                    should_try_act = random.random() < 0.7
+
+                if should_try_act:
+                    actor = self.choose_agent_by_activation(CanAct)
+                    if actor:
+                        agent = actor
+                        run = CallAct
+                    else:
+                        agent = self.choose_agent_by_activation(CanGo)
+                        run = CallGo
+                else:
+                    # Try deliberation first
                     agent = self.choose_agent_by_activation(CanGo)
-                    run = CallGo
+                    if agent:
+                        run = CallGo
+                    else:
+                        # Fall back to action if no one can deliberate
+                        agent = self.choose_agent_by_activation(CanAct)
+                        run = CallAct
             else:
                 agent = ag
                 run = CallGo
