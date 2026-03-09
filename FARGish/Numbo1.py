@@ -362,10 +362,16 @@ class Want(Agent):
         '''Find ImCells tagged with GettingCloser and build Consume agents
         for those promising intermediate states.
 
-        HYBRID APPROACH:
-        - For small numbers (≤10): query slipnet for familiar operations
-        - For large numbers (>10): directly construct Consume agents from actual avails
-        This is cognitively plausible: humans have 3+4 pre-stored, but not 17+38.
+        OPERATOR-PATTERN APPROACH:
+        Query the slipnet for strategic advice (which OPERATOR to use),
+        then apply that operator to the actual available values.
+
+        This separates concerns:
+        - Slipnet = abstract patterns ("addition is good for increasing")
+        - Workspace = concrete instantiation ("add 11 and 4")
+
+        Cognitively plausible: we think "I need to add something" before
+        deciding "11 + 4 specifically".
         '''
         from FARGish2 import ImCell
 
@@ -378,37 +384,35 @@ class Want(Agent):
                     source = imcell  # Use the ImCell as source
                     avails = sorted(imcell.contents.avails, reverse=True)
 
-                    # Check if we have any large numbers (outside slipnet's pre-stored range)
-                    large_avails = [a for a in avails if a > 10]
-
-                    if large_avails:
-                        # DIRECT CONSTRUCTION: build Consume agents from actual avails
-                        # This is more efficient than querying slipnet (which has nothing
-                        # for operands >10) and returns only executable operations.
-                        for a, b in combinations_with_replacement(avails, 2):
-                            for op in [plus, minus, times]:
-                                if a >= b:
-                                    agent = Consume(op, (a, b), source=source)
-                                    fm.build(agent, builder=self, init_a=0.1)
+                    # Build STRATEGIC activation pattern (operator-focused, not operand-focused)
+                    if self.target > sum(avails):
+                        direction = Increase()
                     else:
-                        # SLIPNET QUERY: for small numbers, use spreading activation
-                        # to find familiar operations
-                        activations_in = {}
-                        for avail in avails:
-                            activations_in[Before(avail)] = 1.0
-                        activations_in[After(self.target)] = 0.1
-                        if all(avail > self.target for avail in avails):
-                            activations_in[Increase()] = 10.0
+                        direction = Decrease()
 
-                        agents = fm.pulse_slipnet(
-                            activations_in, k=20, type=Agent, num_get=5
-                        )
+                    activations_in = {
+                        After(self.target): 2.0,
+                        direction: 5.0,
+                        NumOperands(2): 1.0,
+                    }
 
-                        # Build Consume agents with this ImCell as source
-                        for agent in agents:
-                            if isinstance(agent, Consume):
-                                agent = replace(agent, source=source)
-                            fm.build(agent, builder=self, init_a=0.1)
+                    # Query slipnet for STRATEGIC advice (what KIND of operation?)
+                    agents = fm.pulse_slipnet(
+                        activations_in, k=20, type=Agent, num_get=1
+                    )
+
+                    # Extract the suggested OPERATOR (not the operands!)
+                    if agents:
+                        exemplar = agents[0]
+                        if isinstance(exemplar, Consume):
+                            suggested_op = exemplar.operator
+
+                            # Apply suggested operator to ACTUAL avails
+                            for a, b in combinations_with_replacement(avails, 2):
+                                # Consume expects operands in descending order
+                                operands = (a, b) if a >= b else (b, a)
+                                agent = Consume(suggested_op, operands, source=source)
+                                fm.build(agent, builder=self, init_a=0.1)
 
     def can_act(self, fm: FARGModel):
         return not fm.is_blocked(self)
@@ -424,28 +428,37 @@ class Want(Agent):
 
     def consult_slipnet(self, fm: FARGModel):
         source = self.canvas.last_nonblank()
-        #avails = self.canvas[self.addr].avails
         avails = source.contents.avails
-        activations_in = {}
-        for avail in avails:
-            activations_in[Before(avail)] = 1.0
-        activations_in[After(self.target)] = 0.1
-        if all(avail > self.target for avail in avails):
-            activations_in[Increase()] = 10.0
+
+        # Build STRATEGIC activation pattern (what KIND of operation?)
+        if self.target > sum(avails):
+            direction = Increase()
+        else:
+            direction = Decrease()
+
+        activations_in = {
+            After(self.target): 2.0,
+            direction: 5.0,
+            NumOperands(2): 1.0,
+        }
 
         exclude = Exclude(fm.neighbors(self))
-        #source = CellRef(self.canvas, self.addr)
         agents = fm.pulse_slipnet(
-            # GLOBAL constants in next line
             activations_in, k=20, type=Agent, num_get=1, filter=exclude
         )
-        # TODO We need a way to get an Agent from the slipnet that means
-        # something like "Just add what you have."
-        #print('WANT got from slipnet:', [str(a) for a in agents]) #DIAG
-        for agent in agents:
-            if isinstance(agent, Consume):  #HACK
-                agent = replace(agent, source=source)
-            fm.build(agent, builder=self, init_a=0.1)
+
+        # Extract the suggested OPERATOR and apply to actual avails
+        if agents:
+            exemplar = agents[0]
+            if isinstance(exemplar, Consume):
+                suggested_op = exemplar.operator
+
+                # Build Consume agents with suggested operator on actual avails
+                for a, b in combinations_with_replacement(avails, 2):
+                    # Consume expects operands in descending order
+                    operands = (a, b) if a >= b else (b, a)
+                    agent = Consume(suggested_op, operands, source=source)
+                    fm.build(agent, builder=self, init_a=0.1)
 
     def update_support(self, fm: FARGModel):
         for consume in fm.search_ws(
