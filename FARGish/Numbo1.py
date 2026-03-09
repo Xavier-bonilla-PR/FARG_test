@@ -339,6 +339,9 @@ class Want(Agent):
 
         self.update_support(fm)
 
+        # Sleep for a few timesteps to let Consume agents act
+        fm.sleep(self, num_timesteps=3)
+
     def consult_slipnet_for_promising_states(self, fm: FARGModel):
         '''Find ImCells tagged with GettingCloser and build Consume agents
         for those promising intermediate states.'''

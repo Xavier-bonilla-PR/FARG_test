@@ -672,16 +672,18 @@ class FARGModel:
             self.t += 1
             self.remove_sleepers()
             self.run_detectors()
-            if act or self.t % 10 == 0:
-                pred = CanAct
-                run = CallAct
-            else:
-                pred = CanGo
-                run = CallGo
             if ag is None:
-                agent = self.choose_agent_by_activation(pred)
+                # Prioritize action over deliberation
+                actor = self.choose_agent_by_activation(CanAct)
+                if actor:
+                    agent = actor
+                    run = CallAct
+                else:
+                    agent = self.choose_agent_by_activation(CanGo)
+                    run = CallGo
             else:
                 agent = ag
+                run = CallGo
             if agent:
                 run(self, agent)
             #self.activation_g.decay()
@@ -915,6 +917,8 @@ def CanAct(fm: FARGModel, elem: Elem) -> bool:
         isinstance(elem, Agent)
         and
         not fm.is_tagged(elem, NoAct)
+        and
+        not fm.is_sleeping(elem)
         and
         elem.can_act(fm)
     )
